@@ -47,7 +47,7 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
       {/* Header */}
       <div className='flex items-center justify-between p-4 border-b border-[hsl(var(--border-muted))]'>
         <div className='flex items-center gap-3'>
-          <div className='w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center'>
+          <div className='w-10 h-10 rounded-xl bg-linear-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center'>
             <Sparkles className='w-5 h-5 text-[hsl(var(--primary-foreground))]' />
           </div>
           <div>
@@ -100,7 +100,7 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
             <button
               key={prompt}
               onClick={() => setMessage(prompt)}
-              className='px-3 py-1.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--primary)_/_0.2)] hover:text-[hsl(var(--primary))] transition-colors'
+              className='px-3 py-1.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--primary))] transition-colors'
             >
               {prompt}
             </button>

@@ -156,7 +156,7 @@ However, a save in Git records differences in the files and folders AND keeps a 
               </button>
 
               <div className='flex items-start gap-4'>
-                <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center'>
+                <div className='w-16 h-16 rounded-2xl bg-linear-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center'>
                   <BookOpen className='w-8 h-8 text-[hsl(var(--primary-foreground))]' />
                 </div>
                 <div>
@@ -186,7 +186,7 @@ However, a save in Git records differences in the files and folders AND keeps a 
                     Introduction
                   </h2>
                   <div className='prose prose-invert max-w-none'>
-                    <p className='text-[hsl(var(--foreground)_/_0.9)] leading-relaxed whitespace-pre-line'>
+                    <p className='text-[hsl(var(--foreground)/0.9)] leading-relaxed whitespace-pre-line'>
                       {lesson.content.introduction}
                     </p>
                   </div>
@@ -204,8 +204,8 @@ However, a save in Git records differences in the files and folders AND keeps a 
                   <ul className='space-y-3'>
                     {lesson.content.overview.map((item, i) => (
                       <li key={i} className='flex items-start gap-3'>
-                        <CheckCircle2 className='w-5 h-5 text-[hsl(var(--success))] mt-0.5 flex-shrink-0' />
-                        <span className='text-[hsl(var(--foreground)_/_0.9)]'>
+                        <CheckCircle2 className='w-5 h-5 text-[hsl(var(--success))] mt-0.5 shrink-0' />
+                        <span className='text-[hsl(var(--foreground)/0.9)]'>
                           {item}
                         </span>
                       </li>
@@ -226,7 +226,7 @@ However, a save in Git records differences in the files and folders AND keeps a 
                     <ol className='space-y-6'>
                       {lesson.content.assignment.map((item, i) => (
                         <li key={i} className='flex gap-4'>
-                          <span className='flex-shrink-0 w-6 h-6 rounded-full bg-[hsl(var(--primary)_/_0.2)] text-[hsl(var(--primary))] flex items-center justify-center text-sm font-medium'>
+                          <span className='shrink-0 w-6 h-6 rounded-full bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] flex items-center justify-center text-sm font-medium'>
                             {i + 1}
                           </span>
                           <div>
@@ -322,7 +322,7 @@ However, a save in Git records differences in the files and folders AND keeps a 
               </div>
 
               {/* Lesson Contents Sidebar */}
-              <aside className='hidden lg:block w-56 flex-shrink-0'>
+              <aside className='hidden lg:block w-56 shrink-0'>
                 <div className='sticky top-8'>
                   <h3 className='text-sm font-semibold text-[hsl(var(--foreground))] mb-4'>
                     Lesson contents
@@ -341,7 +341,7 @@ However, a save in Git records differences in the files and folders AND keeps a 
                           'block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
                           activeSection === section.id
                             ? 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]'
-                            : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)_/_0.5)]'
+                            : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]'
                         )}
                       >
                         {section.title}
@@ -356,7 +356,7 @@ However, a save in Git records differences in the files and folders AND keeps a 
 
         {/* AI Assistant Panel */}
         {showAI ? (
-          <div className='w-80 flex-shrink-0 hidden xl:block'>
+          <div className='w-80 shrink-0 hidden xl:block'>
             <AIAssistant
               lessonTitle={lesson.title}
               onClose={() => setShowAI(false)}
@@ -368,7 +368,7 @@ However, a save in Git records differences in the files and folders AND keeps a 
         {!showAI && (
           <button
             onClick={() => setShowAI(true)}
-            className='fixed bottom-6 right-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shadow-lg hover:scale-105 transition-transform'
+            className='fixed bottom-6 right-6 w-14 h-14 rounded-2xl bg-linear-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shadow-lg hover:scale-105 transition-transform'
           >
             <MessageSquare className='w-6 h-6' />
           </button>

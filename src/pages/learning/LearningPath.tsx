@@ -226,7 +226,7 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
         return <CheckCircle2 className='w-4 h-4 text-[hsl(var(--success))]' />;
       case 'in-progress':
         return (
-          <Circle className='w-4 h-4 text-[hsl(var(--primary))] fill-[hsl(var(--primary)_/_0.3)]' />
+          <Circle className='w-4 h-4 text-[hsl(var(--primary))] fill-[hsl(var(--primary)/0.3)]' />
         );
       default:
         return <Circle className='w-4 h-4 text-[hsl(var(--muted-text))]' />;
@@ -238,7 +238,7 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
       className={cn(
         'relative bg-[hsl(var(--card))] rounded-xl border transition-all duration-300',
         module.status === 'in-progress'
-          ? 'border-[hsl(var(--primary)_/_0.5)] shadow-[0_0_30px_hsl(var(--primary)_/_0.1)]'
+          ? 'border-[hsl(var(--primary)/0.5)] shadow-[0_0_30px_hsl(var(--primary)/0.1)]'
           : 'border-[hsl(var(--border))]',
         module.status === 'locked' && 'opacity-60'
       )}
@@ -249,7 +249,7 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
         onClick={() => module.status !== 'locked' && setIsExpanded(!isExpanded)}
         className={cn(
           'w-full flex items-center gap-4 p-5 text-left',
-          module.status !== 'locked' && 'hover:bg-[hsl(var(--muted)_/_0.3)]',
+          module.status !== 'locked' && 'hover:bg-[hsl(var(--muted)/0.3)]',
           'transition-colors rounded-xl'
         )}
         disabled={module.status === 'locked'}
@@ -282,7 +282,7 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
             <div className='flex items-center gap-4 mt-3'>
               <div className='flex-1 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
                 <div
-                  className='h-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary-glow))] rounded-full transition-all duration-500'
+                  className='h-full bg-linear-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary-glow))] rounded-full transition-all duration-500'
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -320,9 +320,9 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
                   'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all',
                   lesson.status === 'locked'
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-[hsl(var(--muted)_/_0.5)] cursor-pointer',
+                    : 'hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer',
                   lesson.status === 'in-progress' &&
-                    'bg-[hsl(var(--primary)_/_0.1)] border border-[hsl(var(--primary)_/_0.3)]'
+                    'bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.3)]'
                 )}
               >
                 {getLessonIcon(lesson.status)}
@@ -385,7 +385,7 @@ export default function LearningPath() {
               </div>
               <div className='h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
                 <div
-                  className='h-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] rounded-full transition-all duration-700'
+                  className='h-full bg-linear-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] rounded-full transition-all duration-700'
                   style={{
                     width: `${(completedModules / learningPathData.length) * 100}%`,
                   }}

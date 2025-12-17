@@ -46,10 +46,10 @@ export function LearningProgress() {
 
       <div className='relative'>
         {/* Progress line background */}
-        <div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-border' />
+        <div className='absolute left-3.75 top-4 bottom-4 w-0.5 bg-border' />
         {/* Progress line filled */}
         <div
-          className='absolute left-[15px] top-4 w-0.5 gradient-primary rounded-full transition-all duration-500'
+          className='absolute left-3.75 top-4 w-0.5 gradient-primary rounded-full transition-all duration-500'
           style={{ height: `${Math.min(progressPercentage, 100)}%` }}
         />
 
@@ -69,7 +69,7 @@ export function LearningProgress() {
               }}
             >
               {/* Status icon */}
-              <div className='relative z-10 flex-shrink-0'>
+              <div className='relative z-10 shrink-0'>
                 {module.status === 'completed' && (
                   <CheckCircle2 className='w-8 h-8 text-success' />
                 )}
