@@ -50,8 +50,8 @@ const Login = () => {
         </div>
 
         {/* Social Login */}
-        <div className='space-y-3 mb-6 animate-slide-up opacity-0 delay-200 '>
-          <SocialButton
+        <div className='space-y-3 mb-6 animate-slide-up opacity-0 delay-200'>
+          <SocialButton 
             icon={
               <svg className='w-5 h-5' viewBox='0 0 24 24'>
                 <path
