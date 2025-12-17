@@ -7,7 +7,6 @@ import {
   Zap,
   CheckCircle2,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 import { WelcomeHero } from '@/components/dashboard/WelcomeHero';
 import { AIAssistant } from '@/components/learning/AIAssistant';
@@ -50,7 +49,7 @@ export default function Index() {
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-7xl mx-auto'>
+      <div className='p-8 max-w-7xl h-screen mx-auto flex flex-col'>
         {/* Header */}
         <div className='mb-8 animate-fade-in'>
           <WelcomeHero userName={userName} streak={12} xp={3450} />
@@ -193,7 +192,7 @@ export default function Index() {
           </div>
 
           {/* AI Assistant Card */}
-          <AIAssistant/>
+          <AIAssistant />
         </div>
       </div>
     </DashboardLayout>
