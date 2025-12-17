@@ -11,7 +11,7 @@ export const Logo: React.FC = () => {
         </div>
         <div className='absolute inset-0 rounded-xl bg-gradient-hero opacity-50 blur-xl group-hover:opacity-75 transition-opacity duration-300' />
       </div>
-      <span className='text-2xl font-bold text-gradient-hero'>Ustaad</span>
+      <span className='text-4xl font-bold text-gradient-hero'>Ustaad</span>
     </Link>
   );
 };
