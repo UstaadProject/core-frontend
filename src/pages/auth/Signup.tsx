@@ -16,6 +16,11 @@ import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Logo } from '@/components/layout/Logo';
 import { SocialButton } from '@/components/layout/SocialButton';
 import { useToast } from '@/hooks/use-toast';
+import {
+  getFirebaseAuthErrorMessage,
+  signUpWithEmail,
+} from '@/services/firebase/firebase';
+import { authFetch } from '@/services/api/authFetch';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -48,14 +53,23 @@ const Signup = () => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await signUpWithEmail({ name, email, password });
+      await authFetch('/users/register', { method: 'POST' });
       toast({
         title: 'Account created!',
         description: "Let's set up your learning path.",
       });
       navigate('/onboarding');
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: 'Signup failed',
+        description: getFirebaseAuthErrorMessage(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -7,6 +7,10 @@ import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Logo } from '@/components/layout/Logo';
 import { SocialButton } from '@/components/layout/SocialButton';
 import { useToast } from '@/hooks/use-toast';
+import {
+  getFirebaseAuthErrorMessage,
+  signInWithEmail,
+} from '@/services/firebase/firebase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,15 +24,23 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await signInWithEmail({ email, password });
+
       toast({
         title: 'Welcome back!',
         description: "You've successfully logged in.",
       });
       navigate('/onboarding');
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: getFirebaseAuthErrorMessage(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,7 +63,7 @@ const Login = () => {
 
         {/* Social Login */}
         <div className='space-y-3 mb-6 animate-slide-up opacity-0 delay-200'>
-          <SocialButton 
+          <SocialButton
             icon={
               <svg className='w-5 h-5' viewBox='0 0 24 24'>
                 <path
