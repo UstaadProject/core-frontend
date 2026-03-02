@@ -1,20 +1,21 @@
 import { getCurrentUserIdToken } from '@/services/firebase/firebase';
 
-const API_BASE_URL = (import.meta.env.VITE_SERVER == 'local')
-  ? import.meta.env.VITE_API_BASE_URL_LOCAL
-  : import.meta.env.VITE_API_BASE_URL_PROD;
+const API_BASE_URL =
+  import.meta.env.VITE_SERVER == 'local'
+    ? import.meta.env.VITE_API_BASE_URL_LOCAL
+    : import.meta.env.VITE_API_BASE_URL_PROD;
 
 export const getAuthToken = async () => {
   return getCurrentUserIdToken();
 };
 
-export const getAuthorizationHeader = async () => {
+export const getFirebaseTokenHeader = async () => {
   const token = await getAuthToken();
   if (!token) {
     return null;
   }
 
-  return `Bearer ${token}`;
+  return token;
 };
 
 interface AuthFetchOptions extends RequestInit {
@@ -29,13 +30,13 @@ export const authFetch = async (
   const requestHeaders = new Headers(headers);
 
   if (requireAuth) {
-    const authorizationHeader = await getAuthorizationHeader();
+    const firebaseTokenHeader = await getFirebaseTokenHeader();
 
-    if (!authorizationHeader) {
+    if (!firebaseTokenHeader) {
       throw new Error('User is not authenticated.');
     }
 
-    requestHeaders.set('Authorization', authorizationHeader);
+    requestHeaders.set('firebase-token', firebaseTokenHeader);
   }
 
   if (

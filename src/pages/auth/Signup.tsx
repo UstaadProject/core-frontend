@@ -20,7 +20,7 @@ import {
   getFirebaseAuthErrorMessage,
   signUpWithEmail,
 } from '@/services/firebase/firebase';
-import { authFetch } from '@/services/api/authFetch';
+import { registerUser } from '@/services/api/userApi';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -55,7 +55,7 @@ const Signup = () => {
 
     try {
       await signUpWithEmail({ name, email, password });
-      await authFetch('/users/register', { method: 'POST' });
+      await registerUser(name);
       toast({
         title: 'Account created!',
         description: "Let's set up your learning path.",

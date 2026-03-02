@@ -17,6 +17,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/layout/Logo';
 import { useToast } from '@/hooks/use-toast';
+import {
+  completeOnboarding,
+  generateOnboardingQuiz,
+  submitOnboardingQuiz,
+  type GeneratedQuiz,
+  type OnboardingPreferences,
+} from '@/services/api/userApi';
 
 interface OptionCardProps {
   icon: React.ReactNode;
@@ -238,17 +245,18 @@ const timeOptions = [
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [selections, setSelections] = useState<{
-    skills: string[];
-    experience: string;
-    goal: string;
-    time: string;
-  }>({
+  const [phase, setPhase] = useState<'preferences' | 'quiz'>('preferences');
+  const [quiz, setQuiz] = useState<GeneratedQuiz | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [selections, setSelections] = useState<OnboardingPreferences>({
     skills: [],
     experience: '',
     goal: '',
     time: '',
   });
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -299,7 +307,7 @@ const Onboarding = () => {
     }
   };
 
-  const canProceed = () => {
+  const canProceedPreferences = () => {
     const selection = getSelectionForStep(currentStep);
     if (Array.isArray(selection)) {
       return selection.length > 0;
@@ -307,19 +315,93 @@ const Onboarding = () => {
     return selection !== '';
   };
 
-  const handleNext = () => {
+  const handleStartQuiz = async () => {
+    try {
+      setIsLoading(true);
+      const generatedQuiz = await generateOnboardingQuiz(selections);
+
+      if (!generatedQuiz?.questions?.length) {
+        throw new Error('Quiz could not be generated.');
+      }
+
+      setQuiz(generatedQuiz);
+      setCurrentQuestionIndex(0);
+      setQuizAnswers({});
+      setPhase('quiz');
+    } catch (error) {
+      toast({
+        title: 'Unable to start quiz',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Something went wrong while generating quiz.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePreferencesNext = async () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
-    } else {
+      return;
+    }
+
+    await handleStartQuiz();
+  };
+
+  const handleQuizOptionSelect = (questionId: string, option: string) => {
+    setQuizAnswers((prev) => ({ ...prev, [questionId]: option }));
+  };
+
+  const handleSubmitQuizAndComplete = async () => {
+    try {
+      setIsLoading(true);
+      await submitOnboardingQuiz(quizAnswers);
+      await completeOnboarding(selections);
+
       toast({
         title: 'Welcome to Ustaad!',
         description: 'Your personalized learning path is ready.',
       });
       navigate('/dashboard');
+    } catch (error) {
+      toast({
+        title: 'Onboarding failed',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Something went wrong while finishing onboarding.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleQuizNext = async () => {
+    if (!quiz) return;
+
+    if (currentQuestionIndex < quiz.questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+      return;
+    }
+
+    await handleSubmitQuizAndComplete();
+  };
+
   const handleBack = () => {
+    if (phase === 'quiz') {
+      if (currentQuestionIndex > 0) {
+        setCurrentQuestionIndex((prev) => prev - 1);
+      } else {
+        setPhase('preferences');
+        setCurrentStep(steps.length - 1);
+      }
+      return;
+    }
+
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     }
@@ -329,15 +411,18 @@ const Onboarding = () => {
   const selection = getSelectionForStep(currentStep);
   const isMultiple = steps[currentStep].multiple;
 
+  const currentQuestion = quiz?.questions[currentQuestionIndex];
+  const selectedQuizOption = currentQuestion
+    ? quizAnswers[currentQuestion.id]
+    : '';
+
   return (
     <div className='min-h-screen bg-background relative overflow-hidden'>
-      {/* Background effects */}
       <div className='absolute inset-0 overflow-hidden'>
         <div className='absolute -top-1/2 -left-1/2 w-full h-full bg-linear-to-br from-primary/10 via-transparent to-transparent rounded-full blur-3xl animate-pulse-glow' />
         <div className='absolute -bottom-1/2 -right-1/2 w-full h-full bg-linear-to-tl from-secondary/10 via-transparent to-transparent rounded-full blur-3xl animate-pulse-glow delay-500' />
       </div>
 
-      {/* Grid pattern */}
       <div
         className='absolute inset-0 opacity-[0.02]'
         style={{
@@ -348,79 +433,152 @@ const Onboarding = () => {
       />
 
       <div className='relative z-10 container max-w-2xl mx-auto px-4 py-8 min-h-screen flex flex-col'>
-        {/* Header */}
         <div className='flex items-center justify-between mb-8'>
           <Logo />
-          <div className='flex items-center gap-2'>
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentStep
-                    ? 'w-8 bg-gradient-hero'
-                    : index < currentStep
-                      ? 'w-2 bg-primary'
-                      : 'w-2 bg-muted'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className='flex-1 flex flex-col justify-center'>
-          <div className='animate-slide-up'>
-            <h1 className='text-3xl md:text-4xl font-bold text-foreground mb-2'>
-              {steps[currentStep].title}
-            </h1>
-            <p className='text-lg text-muted-foreground mb-8'>
-              {steps[currentStep].subtitle}
-            </p>
-
-            <div
-              className={`grid gap-3 ${currentStep === 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2'}`}
-            >
-              {options.map((option) => (
-                <OptionCard
-                  key={option.id}
-                  icon={option.icon}
-                  label={option.label}
-                  description={option.description}
-                  gradient={(option as any).gradient}
-                  selected={
-                    isMultiple
-                      ? (selection as string[]).includes(option.id)
-                      : selection === option.id
-                  }
-                  onClick={() => handleSelection(option.id)}
+          {phase === 'preferences' ? (
+            <div className='flex items-center gap-2'>
+              {steps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === currentStep
+                      ? 'w-8 bg-gradient-hero'
+                      : index < currentStep
+                        ? 'w-2 bg-primary'
+                        : 'w-2 bg-muted'
+                  }`}
                 />
               ))}
             </div>
-          </div>
+          ) : (
+            <p className='text-sm text-muted-foreground'>
+              Question {currentQuestionIndex + 1} of{' '}
+              {quiz?.questions.length || 0}
+            </p>
+          )}
         </div>
 
-        {/* Navigation */}
+        <div className='flex-1 flex flex-col justify-center'>
+          {phase === 'preferences' && (
+            <div className='animate-slide-up'>
+              <h1 className='text-3xl md:text-4xl font-bold text-foreground mb-2'>
+                {steps[currentStep].title}
+              </h1>
+              <p className='text-lg text-muted-foreground mb-8'>
+                {steps[currentStep].subtitle}
+              </p>
+
+              <div className='grid gap-3 grid-cols-1 md:grid-cols-2'>
+                {options.map((option) => (
+                  <OptionCard
+                    key={option.id}
+                    icon={option.icon}
+                    label={option.label}
+                    description={option.description}
+                    gradient={(option as { gradient?: string }).gradient}
+                    selected={
+                      isMultiple
+                        ? (selection as string[]).includes(option.id)
+                        : selection === option.id
+                    }
+                    onClick={() => handleSelection(option.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {phase === 'quiz' && currentQuestion && (
+            <div className='animate-slide-up'>
+              <h1 className='text-2xl md:text-3xl font-bold text-foreground mb-2'>
+                Skills Assessment Quiz
+              </h1>
+              <p className='text-muted-foreground mb-6'>
+                This helps us set your ability level and generate the right
+                learning path.
+              </p>
+
+              <div className='rounded-xl border border-border bg-card/70 p-5 mb-4'>
+                <p className='text-sm text-muted-foreground mb-2'>
+                  {currentQuestion.topic || 'General'} •{' '}
+                  {currentQuestion.difficulty || 'Mixed'}
+                </p>
+                <h2 className='text-lg font-semibold text-foreground'>
+                  {currentQuestion.question}
+                </h2>
+              </div>
+
+              <div className='space-y-3'>
+                {currentQuestion.options.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() =>
+                      handleQuizOptionSelect(currentQuestion.id, option)
+                    }
+                    className={`w-full text-left p-4 rounded-xl border transition-all ${
+                      selectedQuizOption === option
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-muted/20 hover:border-primary/40'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className='flex items-center justify-between pt-8'>
           <Button
             variant='ghost'
             onClick={handleBack}
-            disabled={currentStep === 0}
+            disabled={
+              isLoading || (phase === 'preferences' && currentStep === 0)
+            }
             className='gap-2'
           >
             <ArrowLeft className='w-4 h-4' />
             Back
           </Button>
 
-          <Button
-            variant='gradient'
-            size='lg'
-            onClick={handleNext}
-            disabled={!canProceed()}
-            className='gap-2'
-          >
-            {currentStep === steps.length - 1 ? 'Get Started' : 'Continue'}
-            <ArrowRight className='w-4 h-4' />
-          </Button>
+          {phase === 'preferences' ? (
+            <Button
+              variant='gradient'
+              size='lg'
+              onClick={handlePreferencesNext}
+              disabled={!canProceedPreferences() || isLoading}
+              className='gap-2'
+            >
+              {isLoading ? (
+                <div className='w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin' />
+              ) : (
+                <>
+                  {currentStep === steps.length - 1 ? 'Start Quiz' : 'Continue'}
+                  <ArrowRight className='w-4 h-4' />
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              variant='gradient'
+              size='lg'
+              onClick={handleQuizNext}
+              disabled={!selectedQuizOption || isLoading}
+              className='gap-2'
+            >
+              {isLoading ? (
+                <div className='w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin' />
+              ) : (
+                <>
+                  {currentQuestionIndex === (quiz?.questions.length || 1) - 1
+                    ? 'Finish Onboarding'
+                    : 'Next Question'}
+                  <ArrowRight className='w-4 h-4' />
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
   getFirebaseAuthErrorMessage,
   signInWithEmail,
 } from '@/services/firebase/firebase';
+import { createSession } from '@/services/api/userApi';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -26,12 +27,13 @@ const Login = () => {
 
     try {
       await signInWithEmail({ email, password });
+      const session = await createSession();
 
       toast({
         title: 'Welcome back!',
         description: "You've successfully logged in.",
       });
-      navigate('/onboarding');
+      navigate(session.onboarded ? '/dashboard' : '/onboarding');
     } catch (error) {
       toast({
         title: 'Login failed',

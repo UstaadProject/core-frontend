@@ -7,6 +7,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import LearningPath from './pages/learning/LearningPath';
 import LessonDetail from './pages/learning/LessonDetail';
 import type { JSX } from 'react';
+import { Navigate } from 'react-router-dom';
 
 export interface AppRoute {
   path: string;
@@ -15,6 +16,10 @@ export interface AppRoute {
 
 // Wrap pages with layouts here
 export const routes: AppRoute[] = [
+  {
+    path: '/',
+    element: <Navigate to='/login' replace />,
+  },
   {
     path: '/login',
     element: <Login />,
