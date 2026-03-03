@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { LearningLayout } from '@/components/layout/LearningLayout';
 import { Button } from '@/components/ui/button';
+import { AIAssistant } from '@/components/learning/AIAssistant';
 import {
   getTopicContent,
   completeTopic,
@@ -74,8 +75,12 @@ export default function LessonDetail() {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [content, setContent] = useState<TopicContent | null>(null);
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
     const fetchContent = async () => {
       if (!moduleId || !topic) return;
 
@@ -171,7 +176,17 @@ export default function LessonDetail() {
 
   return (
     <LearningLayout>
-      <div className='p-8 max-w-4xl mx-auto'>
+      <div className='grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6 p-6 lg:p-8 h-full'>
+        <div className='min-h-0 overflow-y-auto pr-1'>
+          <Button
+            onClick={() => navigate('/learning-path')}
+            variant='outline'
+            className='mb-4'
+          >
+            <ArrowLeft className='w-4 h-4 mr-2' />
+            Back to Learning Path
+          </Button>
+
         {/* Breadcrumb */}
         <div className='flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] mb-6'>
           <button
@@ -350,6 +365,14 @@ export default function LessonDetail() {
               </>
             )}
           </Button>
+        </div>
+
+        </div>
+
+        <div className='hidden lg:block h-full min-h-0'>
+          <div className='sticky top-4 h-[calc(100vh-2rem)] min-h-0 overflow-hidden rounded-xl border border-[hsl(var(--border))]'>
+            <AIAssistant lessonTitle={content.topic} />
+          </div>
         </div>
       </div>
     </LearningLayout>

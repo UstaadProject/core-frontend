@@ -70,7 +70,7 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
   };
 
   return (
-    <div className='flex flex-col h-full bg-[hsl(var(--card))] border-l border-[hsl(var(--border))] animate-slide-in-right'>
+    <div className='flex h-full min-h-0 flex-col bg-[hsl(var(--card))] animate-slide-in-right'>
       {/* Header */}
       <div className='flex items-center justify-between p-4 border-b border-[hsl(var(--border-muted))]'>
         <div className='flex items-center gap-3'>
@@ -97,7 +97,7 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
       </div>
 
       {/* Messages */}
-      <div className='flex-1 overflow-y-auto p-4 space-y-4'>
+      <div className='min-h-0 flex-1 overflow-y-auto p-4 space-y-4'>
         {messages.map((msg, i) => (
           <div
             key={i}

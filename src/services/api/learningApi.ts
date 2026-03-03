@@ -91,6 +91,36 @@ export interface TutorMessage {
   content: string;
 }
 
+export interface LeaderboardUser {
+  rank: number;
+  name: string;
+  email: string;
+  streakDays: number;
+  xp: number;
+  hoursLearned: number;
+  skillsMastered: number;
+  modulesCompleted: number;
+}
+
+export interface ResumeProject {
+  title: string;
+  bullet_points: string[];
+  tech_stack: string[];
+}
+
+export interface ResumeData {
+  profile: {
+    name: string;
+    email: string;
+    level: string;
+    goals: string;
+    skills: string[];
+  };
+  summary: string;
+  projects: ResumeProject[];
+  achievements: string[];
+}
+
 const parseJson = async (response: Response) => {
   const json = await response.json().catch(() => ({}));
   if (!response.ok || !json?.success) {
@@ -168,6 +198,22 @@ export const updateStreak = async (): Promise<{
 // Get recommended resources
 export const getResources = async () => {
   const response = await authFetch('/learning/resources', {
+    method: 'GET',
+  });
+  const json = await parseJson(response);
+  return json.data;
+};
+
+export const getLeaderboard = async (): Promise<LeaderboardUser[]> => {
+  const response = await authFetch('/learning/leaderboard', {
+    method: 'GET',
+  });
+  const json = await parseJson(response);
+  return json.data.users;
+};
+
+export const buildResume = async (): Promise<ResumeData> => {
+  const response = await authFetch('/learning/resume', {
     method: 'GET',
   });
   const json = await parseJson(response);

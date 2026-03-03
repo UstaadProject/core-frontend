@@ -4,6 +4,8 @@ import Signup from './pages/auth/Signup';
 import Onboarding from './pages/auth/Onboarding';
 import NotFound from './pages/NotFound';
 import Dashboard from './pages/dashboard/Dashboard';
+import Leaderboard from './pages/dashboard/Leaderboard';
+import ResumeBuilder from './pages/dashboard/ResumeBuilder';
 import LearningPath from './pages/learning/LearningPath';
 import LessonDetail from './pages/learning/LessonDetail';
 import type { JSX } from 'react';
@@ -35,6 +37,14 @@ export const routes: AppRoute[] = [
   {
     path: '/dashboard',
     element: <Dashboard />,
+  },
+  {
+    path: '/leaderboard',
+    element: <Leaderboard />,
+  },
+  {
+    path: '/resume-builder',
+    element: <ResumeBuilder />,
   },
   {
     path: '/learning-path',

@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Learning Path', url: '/learning-path', icon: GraduationCap },
+  { title: 'Leaderboard', url: '/leaderboard', icon: Trophy },
+  { title: 'Resume Builder', url: '/resume-builder', icon: User },
   { title: 'Courses', url: '/courses', icon: BookOpen },
   { title: 'AI Assistant', url: '/ai-assistant', icon: Sparkles },
   { title: 'Achievements', url: '/achievements', icon: Trophy },

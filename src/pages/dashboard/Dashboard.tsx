@@ -1,6 +1,6 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BookOpen,
   Clock,
@@ -26,8 +26,12 @@ export default function Index() {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(
     null
   );
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
@@ -268,8 +272,9 @@ export default function Index() {
             </button>
           </div>
 
-          {/* AI Assistant Card */}
-          <AIAssistant />
+          <div className='h-140 min-h-0 overflow-hidden rounded-xl border border-[hsl(var(--border))]'>
+            <AIAssistant />
+          </div>
         </div>
       </div>
     </DashboardLayout>
