@@ -3,10 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   GraduationCap,
-  BookOpen,
-  Sparkles,
   Trophy,
-  Users,
   User,
   Settings,
   LogOut,
