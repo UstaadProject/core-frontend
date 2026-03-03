@@ -8,8 +8,14 @@ import {
 import {
   createUserWithEmailAndPassword,
   getAuth,
+  onAuthStateChanged,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
+  updateEmail,
+  updatePassword,
   updateProfile,
 } from 'firebase/auth';
 
@@ -70,6 +76,52 @@ export const getCurrentUserIdToken = async (forceRefresh = false) => {
   }
 
   return auth.currentUser.getIdToken(forceRefresh);
+};
+
+export const onAuthStateChange = (
+  callback: Parameters<typeof onAuthStateChanged>[1]
+) => {
+  return onAuthStateChanged(auth, callback);
+};
+
+export const sendCurrentUserVerificationEmail = async () => {
+  if (!auth.currentUser) {
+    throw new Error('No authenticated user found.');
+  }
+  await sendEmailVerification(auth.currentUser);
+};
+
+export const changeCurrentUserPassword = async (
+  currentPassword: string,
+  newPassword: string
+) => {
+  if (!auth.currentUser || !auth.currentUser.email) {
+    throw new Error('No authenticated user found.');
+  }
+
+  const credential = EmailAuthProvider.credential(
+    auth.currentUser.email,
+    currentPassword
+  );
+  await reauthenticateWithCredential(auth.currentUser, credential);
+  await updatePassword(auth.currentUser, newPassword);
+};
+
+export const changeCurrentUserEmail = async (
+  currentPassword: string,
+  nextEmail: string
+) => {
+  if (!auth.currentUser || !auth.currentUser.email) {
+    throw new Error('No authenticated user found.');
+  }
+
+  const credential = EmailAuthProvider.credential(
+    auth.currentUser.email,
+    currentPassword
+  );
+  await reauthenticateWithCredential(auth.currentUser, credential);
+  await updateEmail(auth.currentUser, nextEmail);
+  await sendEmailVerification(auth.currentUser);
 };
 
 export const getFirebaseAuthErrorMessage = (error: unknown) => {

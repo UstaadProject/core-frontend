@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Trophy, Flame, Zap, Clock, Loader2, Medal } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { getLeaderboard, type LeaderboardUser } from '@/services/api/learningApi';
+import {
+  getLeaderboard,
+  type LeaderboardUser,
+} from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Leaderboard() {
@@ -92,7 +95,8 @@ export default function Leaderboard() {
                   <Flame className='w-4 h-4' /> {user.streakDays} day streak
                 </p>
                 <p className='flex items-center gap-2 text-[hsl(var(--muted-foreground))]'>
-                  <Clock className='w-4 h-4' /> {Math.round(user.hoursLearned)} hours
+                  <Clock className='w-4 h-4' /> {Math.round(user.hoursLearned)}{' '}
+                  hours
                 </p>
               </div>
             </div>
@@ -134,7 +138,10 @@ export default function Leaderboard() {
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.email} className='border-b border-[hsl(var(--border)/0.6)]'>
+                  <tr
+                    key={user.email}
+                    className='border-b border-[hsl(var(--border)/0.6)]'
+                  >
                     <td className='px-4 py-3 text-[hsl(var(--foreground))] font-semibold'>
                       #{user.rank}
                     </td>

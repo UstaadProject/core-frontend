@@ -13,10 +13,12 @@ import { cn } from '@/lib/utils';
 import { LearningLayout } from '@/components/layout/LearningLayout';
 import {
   getLearningPath,
+  submitLearningFeedbackAndReplan,
   type FullLearningPath,
   type FullModule,
 } from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 interface ModuleCardProps {
   module: FullModule;
@@ -216,6 +218,7 @@ function ModuleCard({ module, index, totalModules }: ModuleCardProps) {
 
 export default function LearningPath() {
   const [loading, setLoading] = useState(true);
+  const [isReplanning, setIsReplanning] = useState(false);
   const [learningData, setLearningData] = useState<FullLearningPath | null>(
     null
   );
@@ -245,6 +248,55 @@ export default function LearningPath() {
 
     fetchLearningPath();
   }, [toast]);
+
+  const handleFeedback = async (
+    feedbackType: 'too_easy' | 'too_difficult' | 'already_know' | 'just_right'
+  ) => {
+    if (!learningData?.learningPath) return;
+
+    const activeModule =
+      learningData.learningPath.modules.find(
+        (module) => module.id === learningData.learningPath.currentModule
+      ) || learningData.learningPath.modules[0];
+
+    if (!activeModule) return;
+
+    const nextTopic =
+      activeModule.topics.find(
+        (topic) => !activeModule.completedTopics?.includes(topic)
+      ) ||
+      activeModule.topics[0] ||
+      '';
+
+    try {
+      setIsReplanning(true);
+      await submitLearningFeedbackAndReplan({
+        feedbackType,
+        moduleId: activeModule.id,
+        topic: nextTopic,
+      });
+
+      const updated = await getLearningPath();
+      setLearningData(updated);
+
+      toast({
+        title: 'Learning path updated',
+        description:
+          feedbackType === 'too_difficult'
+            ? 'Added reinforcement and adjusted your flow.'
+            : 'Path updated based on your feedback.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Could not update learning path',
+        description:
+          error instanceof Error ? error.message : 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsReplanning(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -317,6 +369,46 @@ export default function LearningPath() {
                   }}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className='mt-4 p-4 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))]'>
+            <p className='text-sm text-[hsl(var(--muted-foreground))] mb-3'>
+              How is your current learning path feeling?
+            </p>
+            <div className='flex flex-wrap gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={isReplanning}
+                onClick={() => handleFeedback('too_easy')}
+              >
+                Too Easy
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={isReplanning}
+                onClick={() => handleFeedback('too_difficult')}
+              >
+                Too Difficult
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={isReplanning}
+                onClick={() => handleFeedback('already_know')}
+              >
+                I already know this
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={isReplanning}
+                onClick={() => handleFeedback('just_right')}
+              >
+                Just Right
+              </Button>
             </div>
           </div>
         </div>

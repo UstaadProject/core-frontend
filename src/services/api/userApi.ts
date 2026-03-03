@@ -20,6 +20,33 @@ export interface GeneratedQuiz {
   questions: QuizQuestion[];
 }
 
+export interface UserSettings {
+  emailNotifications: boolean;
+  weeklyDigest: boolean;
+  productUpdates: boolean;
+  reminderNotifications: boolean;
+  theme: string;
+}
+
+export interface UserProfileMeta {
+  bio: string;
+  location: string;
+  website: string;
+  github: string;
+  linkedin: string;
+}
+
+export interface CurrentUserResponse {
+  id: string;
+  firebaseUid: string;
+  email: string;
+  name: string;
+  onboarded: boolean;
+  preferences: OnboardingPreferences;
+  profile: UserProfileMeta;
+  settings: UserSettings;
+}
+
 const parseJson = async (response: Response) => {
   const json = await response.json().catch(() => ({}));
   if (!response.ok || !json?.success) {
@@ -78,4 +105,33 @@ export const completeOnboarding = async (
   });
   const json = await parseJson(response);
   return json.data;
+};
+
+export const getCurrentUser = async (): Promise<CurrentUserResponse> => {
+  const response = await authFetch('/users/me', { method: 'GET' });
+  const json = await parseJson(response);
+  return json.data as CurrentUserResponse;
+};
+
+export const updateCurrentUserProfile = async (payload: {
+  name?: string;
+  profile?: Partial<UserProfileMeta>;
+}) => {
+  const response = await authFetch('/users/me/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  const json = await parseJson(response);
+  return json.data as CurrentUserResponse;
+};
+
+export const updateCurrentUserSettings = async (
+  settings: Partial<UserSettings>
+) => {
+  const response = await authFetch('/users/me/settings', {
+    method: 'PATCH',
+    body: JSON.stringify({ settings }),
+  });
+  const json = await parseJson(response);
+  return json.data as { settings: UserSettings };
 };

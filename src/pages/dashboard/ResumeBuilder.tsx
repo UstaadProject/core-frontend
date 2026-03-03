@@ -76,7 +76,8 @@ export default function ResumeBuilder() {
               Resume Builder
             </h1>
             <p className='text-[hsl(var(--muted-foreground))] mt-2'>
-              Generated from your profile, learning progress, and AI project summaries.
+              Generated from your profile, learning progress, and AI project
+              summaries.
             </p>
           </div>
           <Button onClick={handlePrint} variant='outline'>
@@ -130,13 +131,19 @@ export default function ResumeBuilder() {
             </h3>
             <div className='space-y-5'>
               {resume.projects.map((project, index) => (
-                <div key={`${project.title}-${index}`} className='border border-[hsl(var(--border))] rounded-lg p-4'>
+                <div
+                  key={`${project.title}-${index}`}
+                  className='border border-[hsl(var(--border))] rounded-lg p-4'
+                >
                   <h4 className='font-semibold text-[hsl(var(--foreground))] mb-2'>
                     {project.title}
                   </h4>
                   <ul className='space-y-2 mb-3'>
                     {project.bullet_points.map((point, pointIndex) => (
-                      <li key={pointIndex} className='text-[hsl(var(--foreground))] text-sm'>
+                      <li
+                        key={pointIndex}
+                        className='text-[hsl(var(--foreground))] text-sm'
+                      >
                         • {point}
                       </li>
                     ))}

@@ -6,10 +6,15 @@ import NotFound from './pages/NotFound';
 import Dashboard from './pages/dashboard/Dashboard';
 import Leaderboard from './pages/dashboard/Leaderboard';
 import ResumeBuilder from './pages/dashboard/ResumeBuilder';
+import Achievements from './pages/dashboard/Achievements';
+import Profile from './pages/dashboard/Profile';
+import Settings from './pages/dashboard/Settings';
 import LearningPath from './pages/learning/LearningPath';
 import LessonDetail from './pages/learning/LessonDetail';
 import type { JSX } from 'react';
 import { Navigate } from 'react-router-dom';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { PublicRoute } from '@/components/auth/PublicRoute';
 
 export interface AppRoute {
   path: string;
@@ -24,35 +29,91 @@ export const routes: AppRoute[] = [
   },
   {
     path: '/login',
-    element: <Login />,
+    element: (
+      <PublicRoute>
+        <Login />
+      </PublicRoute>
+    ),
   },
   {
     path: '/signup',
-    element: <Signup />,
+    element: (
+      <PublicRoute>
+        <Signup />
+      </PublicRoute>
+    ),
   },
   {
     path: '/onboarding',
-    element: <Onboarding />,
+    element: (
+      <ProtectedRoute>
+        <Onboarding />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/dashboard',
-    element: <Dashboard />,
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/leaderboard',
-    element: <Leaderboard />,
+    element: (
+      <ProtectedRoute>
+        <Leaderboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/achievements',
+    element: (
+      <ProtectedRoute>
+        <Achievements />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/resume-builder',
-    element: <ResumeBuilder />,
+    element: (
+      <ProtectedRoute>
+        <ResumeBuilder />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/profile',
+    element: (
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/settings',
+    element: (
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/learning-path',
-    element: <LearningPath />,
+    element: (
+      <ProtectedRoute>
+        <LearningPath />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/lesson/:moduleId/:topic',
-    element: <LessonDetail />,
+    element: (
+      <ProtectedRoute>
+        <LessonDetail />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '*',

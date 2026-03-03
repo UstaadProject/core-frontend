@@ -121,6 +121,15 @@ export interface ResumeData {
   achievements: string[];
 }
 
+export interface AchievementItem {
+  key: string;
+  title: string;
+  description: string;
+  badge: string;
+  unlocked?: boolean;
+  unlockedAt?: string;
+}
+
 const parseJson = async (response: Response) => {
   const json = await response.json().catch(() => ({}));
   if (!response.ok || !json?.success) {
@@ -218,4 +227,36 @@ export const buildResume = async (): Promise<ResumeData> => {
   });
   const json = await parseJson(response);
   return json.data;
+};
+
+export const submitLearningFeedbackAndReplan = async (payload: {
+  feedbackType: 'too_easy' | 'too_difficult' | 'already_know' | 'just_right';
+  moduleId: string;
+  topic?: string;
+}) => {
+  const response = await authFetch('/learning/feedback-replan', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  const json = await parseJson(response);
+  return json.data as {
+    feedbackType: string;
+    aiFeedback: Record<string, unknown>;
+    aiReplanApplied: boolean;
+    learningPath: {
+      modules: FullModule[];
+      currentModule: string;
+    };
+  };
+};
+
+export const getAchievements = async () => {
+  const response = await authFetch('/learning/achievements', {
+    method: 'GET',
+  });
+  const json = await parseJson(response);
+  return json.data as {
+    unlocked: AchievementItem[];
+    available: AchievementItem[];
+  };
 };

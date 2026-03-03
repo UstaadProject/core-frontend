@@ -187,186 +187,188 @@ export default function LessonDetail() {
             Back to Learning Path
           </Button>
 
-        {/* Breadcrumb */}
-        <div className='flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] mb-6'>
-          <button
-            onClick={() => navigate('/learning-path')}
-            className='hover:text-[hsl(var(--foreground))] transition-colors'
-          >
-            Learning Path
-          </button>
-          <ChevronRight className='w-4 h-4' />
-          <span>{content.module}</span>
-          <ChevronRight className='w-4 h-4' />
-          <span className='text-[hsl(var(--foreground))]'>{content.topic}</span>
-        </div>
-
-        {/* Header */}
-        <div className='mb-8 animate-fade-in'>
-          <div className='flex items-center gap-2 mb-2'>
-            <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]'>
-              {content.difficulty}
-            </span>
-            <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]'>
-              {content.module}
+          {/* Breadcrumb */}
+          <div className='flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] mb-6'>
+            <button
+              onClick={() => navigate('/learning-path')}
+              className='hover:text-[hsl(var(--foreground))] transition-colors'
+            >
+              Learning Path
+            </button>
+            <ChevronRight className='w-4 h-4' />
+            <span>{content.module}</span>
+            <ChevronRight className='w-4 h-4' />
+            <span className='text-[hsl(var(--foreground))]'>
+              {content.topic}
             </span>
           </div>
-          <h1 className='text-3xl font-bold text-[hsl(var(--foreground))]'>
-            {content.topic}
-          </h1>
-        </div>
 
-        {/* Main Content */}
-        <div className='space-y-6'>
-          {/* Explanation */}
-          <ContentSection title='Explanation' icon={Lightbulb}>
-            <div className='prose prose-invert max-w-none'>
-              <p className='text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed'>
-                {content.explanation}
-              </p>
+          {/* Header */}
+          <div className='mb-8 animate-fade-in'>
+            <div className='flex items-center gap-2 mb-2'>
+              <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]'>
+                {content.difficulty}
+              </span>
+              <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]'>
+                {content.module}
+              </span>
             </div>
-          </ContentSection>
+            <h1 className='text-3xl font-bold text-[hsl(var(--foreground))]'>
+              {content.topic}
+            </h1>
+          </div>
 
-          {/* Code Examples */}
-          {content.code_examples && content.code_examples.length > 0 && (
-            <ContentSection title='Code Examples' icon={Code}>
-              <div className='space-y-4'>
-                {content.code_examples.map((example, index) => (
-                  <CodeBlock key={index} code={example} />
-                ))}
-              </div>
-            </ContentSection>
-          )}
-
-          {/* Common Mistakes */}
-          {content.common_mistakes && content.common_mistakes.length > 0 && (
-            <ContentSection
-              title='Common Mistakes to Avoid'
-              icon={AlertTriangle}
-            >
-              <ul className='space-y-2'>
-                {content.common_mistakes.map((mistake, index) => (
-                  <li
-                    key={index}
-                    className='flex items-start gap-3 text-[hsl(var(--foreground))]'
-                  >
-                    <span className='w-5 h-5 rounded-full bg-[hsl(var(--destructive)/0.2)] flex items-center justify-center shrink-0 mt-0.5'>
-                      <span className='text-xs text-[hsl(var(--destructive))]'>
-                        ✗
-                      </span>
-                    </span>
-                    <span>{mistake}</span>
-                  </li>
-                ))}
-              </ul>
-            </ContentSection>
-          )}
-
-          {/* Best Practices */}
-          {content.best_practices && content.best_practices.length > 0 && (
-            <ContentSection title='Best Practices' icon={CheckCircle2}>
-              <ul className='space-y-2'>
-                {content.best_practices.map((practice, index) => (
-                  <li
-                    key={index}
-                    className='flex items-start gap-3 text-[hsl(var(--foreground))]'
-                  >
-                    <span className='w-5 h-5 rounded-full bg-[hsl(var(--success)/0.2)] flex items-center justify-center shrink-0 mt-0.5'>
-                      <span className='text-xs text-[hsl(var(--success))]'>
-                        ✓
-                      </span>
-                    </span>
-                    <span>{practice}</span>
-                  </li>
-                ))}
-              </ul>
-            </ContentSection>
-          )}
-
-          {/* Practice Tasks */}
-          {content.practice_tasks && content.practice_tasks.length > 0 && (
-            <ContentSection title='Practice Tasks' icon={ListTodo}>
-              <ul className='space-y-3'>
-                {content.practice_tasks.map((task, index) => (
-                  <li
-                    key={index}
-                    className='flex items-start gap-3 p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg'
-                  >
-                    <span className='w-6 h-6 rounded-full bg-[hsl(var(--primary)/0.2)] flex items-center justify-center shrink-0 text-xs font-medium text-[hsl(var(--primary))]'>
-                      {index + 1}
-                    </span>
-                    <span className='text-[hsl(var(--foreground))]'>
-                      {task}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </ContentSection>
-          )}
-
-          {/* Mini Project */}
-          {content.mini_project && (
-            <ContentSection title='Mini Project' icon={Folder}>
-              <div className='p-4 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-lg'>
-                <p className='text-[hsl(var(--foreground))]'>
-                  {content.mini_project}
+          {/* Main Content */}
+          <div className='space-y-6'>
+            {/* Explanation */}
+            <ContentSection title='Explanation' icon={Lightbulb}>
+              <div className='prose prose-invert max-w-none'>
+                <p className='text-[hsl(var(--foreground))] whitespace-pre-wrap leading-relaxed'>
+                  {content.explanation}
                 </p>
               </div>
             </ContentSection>
-          )}
 
-          {/* Assignments */}
-          {content.assignments && content.assignments.length > 0 && (
-            <ContentSection title='Assignments' icon={ListTodo}>
-              <ul className='space-y-3'>
-                {content.assignments.map((assignment, index) => (
-                  <li
-                    key={index}
-                    className='flex items-start gap-3 p-3 bg-[hsl(var(--secondary)/0.1)] border border-[hsl(var(--secondary)/0.2)] rounded-lg'
-                  >
-                    <span className='w-6 h-6 rounded-full bg-[hsl(var(--secondary)/0.2)] flex items-center justify-center shrink-0 text-xs font-medium text-[hsl(var(--secondary))]'>
-                      {index + 1}
-                    </span>
-                    <span className='text-[hsl(var(--foreground))]'>
-                      {assignment}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </ContentSection>
-          )}
-        </div>
-
-        {/* Complete Button */}
-        <div className='mt-8 flex items-center justify-between p-6 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))]'>
-          <div>
-            <h3 className='font-semibold text-[hsl(var(--foreground))]'>
-              Ready to continue?
-            </h3>
-            <p className='text-sm text-[hsl(var(--muted-foreground))]'>
-              Mark this topic as complete to earn XP and unlock the next topic.
-            </p>
-          </div>
-          <Button
-            onClick={handleComplete}
-            disabled={completing}
-            variant='gradient'
-            size='lg'
-          >
-            {completing ? (
-              <>
-                <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                Completing...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className='w-4 h-4 mr-2' />
-                Mark as Complete
-              </>
+            {/* Code Examples */}
+            {content.code_examples && content.code_examples.length > 0 && (
+              <ContentSection title='Code Examples' icon={Code}>
+                <div className='space-y-4'>
+                  {content.code_examples.map((example, index) => (
+                    <CodeBlock key={index} code={example} />
+                  ))}
+                </div>
+              </ContentSection>
             )}
-          </Button>
-        </div>
 
+            {/* Common Mistakes */}
+            {content.common_mistakes && content.common_mistakes.length > 0 && (
+              <ContentSection
+                title='Common Mistakes to Avoid'
+                icon={AlertTriangle}
+              >
+                <ul className='space-y-2'>
+                  {content.common_mistakes.map((mistake, index) => (
+                    <li
+                      key={index}
+                      className='flex items-start gap-3 text-[hsl(var(--foreground))]'
+                    >
+                      <span className='w-5 h-5 rounded-full bg-[hsl(var(--destructive)/0.2)] flex items-center justify-center shrink-0 mt-0.5'>
+                        <span className='text-xs text-[hsl(var(--destructive))]'>
+                          ✗
+                        </span>
+                      </span>
+                      <span>{mistake}</span>
+                    </li>
+                  ))}
+                </ul>
+              </ContentSection>
+            )}
+
+            {/* Best Practices */}
+            {content.best_practices && content.best_practices.length > 0 && (
+              <ContentSection title='Best Practices' icon={CheckCircle2}>
+                <ul className='space-y-2'>
+                  {content.best_practices.map((practice, index) => (
+                    <li
+                      key={index}
+                      className='flex items-start gap-3 text-[hsl(var(--foreground))]'
+                    >
+                      <span className='w-5 h-5 rounded-full bg-[hsl(var(--success)/0.2)] flex items-center justify-center shrink-0 mt-0.5'>
+                        <span className='text-xs text-[hsl(var(--success))]'>
+                          ✓
+                        </span>
+                      </span>
+                      <span>{practice}</span>
+                    </li>
+                  ))}
+                </ul>
+              </ContentSection>
+            )}
+
+            {/* Practice Tasks */}
+            {content.practice_tasks && content.practice_tasks.length > 0 && (
+              <ContentSection title='Practice Tasks' icon={ListTodo}>
+                <ul className='space-y-3'>
+                  {content.practice_tasks.map((task, index) => (
+                    <li
+                      key={index}
+                      className='flex items-start gap-3 p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg'
+                    >
+                      <span className='w-6 h-6 rounded-full bg-[hsl(var(--primary)/0.2)] flex items-center justify-center shrink-0 text-xs font-medium text-[hsl(var(--primary))]'>
+                        {index + 1}
+                      </span>
+                      <span className='text-[hsl(var(--foreground))]'>
+                        {task}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </ContentSection>
+            )}
+
+            {/* Mini Project */}
+            {content.mini_project && (
+              <ContentSection title='Mini Project' icon={Folder}>
+                <div className='p-4 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-lg'>
+                  <p className='text-[hsl(var(--foreground))]'>
+                    {content.mini_project}
+                  </p>
+                </div>
+              </ContentSection>
+            )}
+
+            {/* Assignments */}
+            {content.assignments && content.assignments.length > 0 && (
+              <ContentSection title='Assignments' icon={ListTodo}>
+                <ul className='space-y-3'>
+                  {content.assignments.map((assignment, index) => (
+                    <li
+                      key={index}
+                      className='flex items-start gap-3 p-3 bg-[hsl(var(--secondary)/0.1)] border border-[hsl(var(--secondary)/0.2)] rounded-lg'
+                    >
+                      <span className='w-6 h-6 rounded-full bg-[hsl(var(--secondary)/0.2)] flex items-center justify-center shrink-0 text-xs font-medium text-[hsl(var(--secondary))]'>
+                        {index + 1}
+                      </span>
+                      <span className='text-[hsl(var(--foreground))]'>
+                        {assignment}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </ContentSection>
+            )}
+          </div>
+
+          {/* Complete Button */}
+          <div className='mt-8 flex items-center justify-between p-6 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))]'>
+            <div>
+              <h3 className='font-semibold text-[hsl(var(--foreground))]'>
+                Ready to continue?
+              </h3>
+              <p className='text-sm text-[hsl(var(--muted-foreground))]'>
+                Mark this topic as complete to earn XP and unlock the next
+                topic.
+              </p>
+            </div>
+            <Button
+              onClick={handleComplete}
+              disabled={completing}
+              variant='gradient'
+              size='lg'
+            >
+              {completing ? (
+                <>
+                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                  Completing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className='w-4 h-4 mr-2' />
+                  Mark as Complete
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className='hidden lg:block h-full min-h-0'>

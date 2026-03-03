@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   GraduationCap,
@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { signOutUser } from '@/services/firebase/firebase';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -34,8 +35,14 @@ const bottomNavItems = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await signOutUser();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <aside
@@ -118,7 +125,10 @@ export function Sidebar() {
             )}
           </NavLink>
         ))}
-        <button className='flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]'>
+        <button
+          onClick={handleLogout}
+          className='flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]'
+        >
           <LogOut className='w-5 h-5 shrink-0' />
           {!collapsed && <span className='font-medium text-sm'>Log Out</span>}
         </button>
