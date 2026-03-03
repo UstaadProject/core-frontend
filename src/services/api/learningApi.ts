@@ -121,6 +121,59 @@ export interface ResumeData {
   achievements: string[];
 }
 
+const toStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const normalizeResumeData = (data: unknown): ResumeData => {
+  const raw = (data ?? {}) as Record<string, unknown>;
+  const profileRaw =
+    raw.profile && typeof raw.profile === 'object'
+      ? (raw.profile as Record<string, unknown>)
+      : {};
+
+  const projectsRaw = Array.isArray(raw.projects) ? raw.projects : [];
+  const projects: ResumeProject[] = projectsRaw.map((item, index) => {
+    const project =
+      item && typeof item === 'object'
+        ? (item as Record<string, unknown>)
+        : {};
+
+    const title =
+      typeof project.title === 'string' && project.title.trim().length > 0
+        ? project.title.trim()
+        : `Project ${index + 1}`;
+
+    const bullet_points = toStringArray(project.bullet_points);
+    const tech_stack = toStringArray(project.tech_stack);
+
+    return {
+      title,
+      bullet_points,
+      tech_stack,
+    };
+  });
+
+  return {
+    profile: {
+      name:
+        typeof profileRaw.name === 'string' ? profileRaw.name : 'Learner Name',
+      email: typeof profileRaw.email === 'string' ? profileRaw.email : '',
+      level:
+        typeof profileRaw.level === 'string' ? profileRaw.level : 'Beginner',
+      goals: typeof profileRaw.goals === 'string' ? profileRaw.goals : '',
+      skills: toStringArray(profileRaw.skills),
+    },
+    summary: typeof raw.summary === 'string' ? raw.summary : '',
+    projects,
+    achievements: toStringArray(raw.achievements),
+  };
+};
+
 export interface AchievementItem {
   key: string;
   title: string;
@@ -221,12 +274,18 @@ export const getLeaderboard = async (): Promise<LeaderboardUser[]> => {
   return json.data.users;
 };
 
-export const buildResume = async (): Promise<ResumeData> => {
-  const response = await authFetch('/learning/resume', {
+export const buildResume = async (options?: {
+  regenerate?: boolean;
+}): Promise<ResumeData> => {
+  const shouldRegenerate = options?.regenerate === true;
+  const response = await authFetch(
+    `/learning/resume${shouldRegenerate ? '?regenerate=true' : ''}`,
+    {
     method: 'GET',
-  });
+    }
+  );
   const json = await parseJson(response);
-  return json.data;
+  return normalizeResumeData(json.data);
 };
 
 export const submitLearningFeedbackAndReplan = async (payload: {

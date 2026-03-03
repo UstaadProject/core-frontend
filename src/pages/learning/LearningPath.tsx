@@ -340,18 +340,18 @@ export default function LearningPath() {
 
   return (
     <LearningLayout>
-      <div className='p-8 max-w-4xl mx-auto h-screen'>
+      <div className='ui-page-shell max-w-4xl h-screen'>
         {/* Header */}
-        <div className='mb-8 animate-fade-in'>
-          <h1 className='text-3xl font-bold text-[hsl(var(--foreground))]'>
+        <div className='ui-page-header mb-8 animate-fade-in'>
+          <h1 className='ui-page-title'>
             Learning Path
           </h1>
-          <p className='text-[hsl(var(--muted-foreground))] mt-2'>
+          <p className='ui-page-subtitle'>
             Your personalized {learningPath.level} web development journey
           </p>
 
           {/* Progress Overview */}
-          <div className='flex items-center gap-4 mt-6 p-4 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))]'>
+          <div className='ui-surface-card flex items-center gap-4 mt-6 p-4'>
             <div className='flex-1'>
               <div className='flex items-center justify-between mb-2'>
                 <span className='text-sm text-[hsl(var(--muted-foreground))]'>
@@ -372,8 +372,8 @@ export default function LearningPath() {
             </div>
           </div>
 
-          <div className='mt-4 p-4 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))]'>
-            <p className='text-sm text-[hsl(var(--muted-foreground))] mb-3'>
+          <div className='ui-surface-card mt-4 p-4'>
+            <p className='text-sm text-[hsl(var(--muted-foreground))] mb-3 font-medium'>
               How is your current learning path feeling?
             </p>
             <div className='flex flex-wrap gap-2'>

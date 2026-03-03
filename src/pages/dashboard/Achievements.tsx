@@ -56,14 +56,16 @@ export default function Achievements() {
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-6xl mx-auto'>
-        <h1 className='text-3xl font-bold text-[hsl(var(--foreground))] flex items-center gap-3'>
-          <Trophy className='w-8 h-8 text-[hsl(var(--primary))]' />
-          Achievements & Badges
-        </h1>
-        <p className='text-[hsl(var(--muted-foreground))] mt-2 mb-8'>
-          Unlock badges based on your consistency, progress, and milestones.
-        </p>
+      <div className='ui-page-shell'>
+        <div className='ui-page-header'>
+          <h1 className='ui-page-title flex items-center gap-3'>
+            <Trophy className='w-8 h-8 text-[hsl(var(--primary))]' />
+            Achievements & Badges
+          </h1>
+          <p className='ui-page-subtitle'>
+            Unlock badges based on your consistency, progress, and milestones.
+          </p>
+        </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
           {available.map((achievement) => {
@@ -75,8 +77,8 @@ export default function Achievements() {
                 key={achievement.key}
                 className={`rounded-xl border p-5 ${
                   isUnlocked
-                    ? 'bg-[hsl(var(--card))] border-[hsl(var(--primary)/0.4)]'
-                    : 'bg-[hsl(var(--card))] border-[hsl(var(--border))] opacity-75'
+                    ? 'bg-[hsl(var(--card))] border-[hsl(var(--primary)/0.4)] shadow-[0_8px_24px_hsl(var(--primary)/0.12)]'
+                    : 'bg-[hsl(var(--card))] border-[hsl(var(--border))] opacity-85'
                 }`}
               >
                 <div className='flex items-center justify-between mb-3'>

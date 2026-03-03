@@ -113,13 +113,16 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-4xl mx-auto space-y-6'>
-        <h1 className='text-3xl font-bold text-[hsl(var(--foreground))]'>
-          Settings
-        </h1>
+      <div className='ui-page-shell space-y-6'>
+        <div className='ui-page-header'>
+          <h1 className='ui-page-title'>Settings</h1>
+          <p className='ui-page-subtitle'>
+            Configure notifications, preferences, and security.
+          </p>
+        </div>
 
-        <div className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 space-y-4'>
-          <h2 className='text-lg font-semibold text-[hsl(var(--foreground))]'>
+        <div className='ui-surface-card p-6 space-y-5'>
+          <h2 className='ui-section-title'>
             Notifications & Preferences
           </h2>
 
@@ -129,8 +132,13 @@ export default function Settings() {
             ['productUpdates', 'Product Updates'],
             ['reminderNotifications', 'Learning Reminders'],
           ].map(([key, label]) => (
-            <label key={key} className='flex items-center justify-between'>
-              <span className='text-[hsl(var(--foreground))]'>{label}</span>
+            <label
+              key={key}
+              className='flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface))] px-4 py-3'
+            >
+              <span className='text-[hsl(var(--foreground))] text-sm font-medium'>
+                {label}
+              </span>
               <input
                 type='checkbox'
                 checked={settings[key as keyof UserSettings] as boolean}
@@ -145,7 +153,7 @@ export default function Settings() {
           ))}
 
           <label className='block'>
-            <span className='text-sm text-[hsl(var(--muted-foreground))]'>
+            <span className='ui-field-label'>
               Theme
             </span>
             <select
@@ -166,32 +174,38 @@ export default function Settings() {
           </Button>
         </div>
 
-        <div className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 space-y-4'>
-          <h2 className='text-lg font-semibold text-[hsl(var(--foreground))]'>
+        <div className='ui-surface-card p-6 space-y-4'>
+          <h2 className='ui-section-title'>
             Security
           </h2>
-          <Input
-            type='password'
-            value={passwordForm.currentPassword}
-            onChange={(e) =>
-              setPasswordForm((prev) => ({
-                ...prev,
-                currentPassword: e.target.value,
-              }))
-            }
-            placeholder='Current password'
-          />
-          <Input
-            type='password'
-            value={passwordForm.newPassword}
-            onChange={(e) =>
-              setPasswordForm((prev) => ({
-                ...prev,
-                newPassword: e.target.value,
-              }))
-            }
-            placeholder='New password'
-          />
+          <label>
+            <span className='ui-field-label'>Current password</span>
+            <Input
+              type='password'
+              value={passwordForm.currentPassword}
+              onChange={(e) =>
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  currentPassword: e.target.value,
+                }))
+              }
+              placeholder='Current password'
+            />
+          </label>
+          <label>
+            <span className='ui-field-label'>New password</span>
+            <Input
+              type='password'
+              value={passwordForm.newPassword}
+              onChange={(e) =>
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  newPassword: e.target.value,
+                }))
+              }
+              placeholder='New password'
+            />
+          </label>
           <Button onClick={handleChangePassword} disabled={changingPassword}>
             {changingPassword ? 'Updating...' : 'Change Password'}
           </Button>

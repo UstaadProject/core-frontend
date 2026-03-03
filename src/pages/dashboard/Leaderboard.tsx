@@ -56,13 +56,13 @@ export default function Leaderboard() {
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-7xl mx-auto'>
-        <div className='mb-8'>
-          <h1 className='text-3xl font-bold text-[hsl(var(--foreground))] flex items-center gap-3'>
+      <div className='ui-page-shell max-w-7xl'>
+        <div className='ui-page-header'>
+          <h1 className='ui-page-title flex items-center gap-3'>
             <Trophy className='w-8 h-8 text-[hsl(var(--primary))]' />
             Leaderboard
           </h1>
-          <p className='text-[hsl(var(--muted-foreground))] mt-2'>
+          <p className='ui-page-subtitle'>
             Compete with learners based on streaks, XP, and learning progress.
           </p>
         </div>
@@ -71,7 +71,7 @@ export default function Leaderboard() {
           {topThree.map((user, index) => (
             <div
               key={user.email}
-              className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-5'
+              className='ui-surface-card p-5'
             >
               <div className='flex items-center justify-between mb-4'>
                 <div className='flex items-center gap-2'>
@@ -103,7 +103,7 @@ export default function Leaderboard() {
           ))}
         </div>
 
-        <div className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] overflow-hidden'>
+        <div className='ui-surface-card overflow-hidden'>
           <div className='p-4 border-b border-[hsl(var(--border))]'>
             <h2 className='font-semibold text-[hsl(var(--foreground))]'>
               Full Rankings

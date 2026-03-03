@@ -20,7 +20,7 @@ export function AIAssistantWidget() {
           </div>
           <div className='flex-1'>
             <h3 className='font-display font-semibold text-lg text-foreground mb-1'>
-              AI Learning Assistant
+              Ai Learning Assistant
             </h3>
             <p className='text-sm text-muted-foreground leading-relaxed'>
               Get personalized help with your courses, code reviews, and career

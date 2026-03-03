@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 
 export default function ResumeBuilder() {
   const [loading, setLoading] = useState(true);
+  const [regenerating, setRegenerating] = useState(false);
   const [resume, setResume] = useState<ResumeData | null>(null);
   const { toast } = useToast();
   const hasFetchedRef = useRef(false);
@@ -39,6 +40,27 @@ export default function ResumeBuilder() {
     window.print();
   };
 
+  const handleRegenerate = async () => {
+    try {
+      setRegenerating(true);
+      const data = await buildResume({ regenerate: true });
+      setResume(data);
+      toast({
+        title: 'Resume regenerated',
+        description: 'A fresh version has been generated and saved.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to regenerate resume',
+        description:
+          error instanceof Error ? error.message : 'Please try again later',
+        variant: 'destructive',
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -68,25 +90,40 @@ export default function ResumeBuilder() {
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-4xl mx-auto'>
-        <div className='flex items-center justify-between mb-8'>
+      <div className='ui-page-shell max-w-4xl'>
+        <div className='ui-page-header flex items-start justify-between gap-4'>
           <div>
-            <h1 className='text-3xl font-bold text-[hsl(var(--foreground))] flex items-center gap-3'>
+            <h1 className='ui-page-title flex items-center gap-3'>
               <FileText className='w-8 h-8 text-[hsl(var(--primary))]' />
               Resume Builder
             </h1>
-            <p className='text-[hsl(var(--muted-foreground))] mt-2'>
+            <p className='ui-page-subtitle'>
               Generated from your profile, learning progress, and AI project
               summaries.
             </p>
           </div>
-          <Button onClick={handlePrint} variant='outline'>
-            <Download className='w-4 h-4 mr-2' />
-            Download / Print
-          </Button>
+          <div className='flex items-center gap-2'>
+            <Button onClick={handleRegenerate} variant='outline' disabled={regenerating}>
+              {regenerating ? (
+                <>
+                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                  Regenerating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className='w-4 h-4 mr-2' />
+                  Regenerate
+                </>
+              )}
+            </Button>
+            <Button onClick={handlePrint} variant='outline'>
+              <Download className='w-4 h-4 mr-2' />
+              Download / Print
+            </Button>
+          </div>
         </div>
 
-        <div className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-8 space-y-8'>
+        <div className='ui-surface-card p-8 space-y-8'>
           <div className='border-b border-[hsl(var(--border))] pb-6'>
             <h2 className='text-2xl font-bold text-[hsl(var(--foreground))]'>
               {resume.profile.name}
@@ -133,7 +170,7 @@ export default function ResumeBuilder() {
               {resume.projects.map((project, index) => (
                 <div
                   key={`${project.title}-${index}`}
-                  className='border border-[hsl(var(--border))] rounded-lg p-4'
+                  className='rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.45)] p-4'
                 >
                   <h4 className='font-semibold text-[hsl(var(--foreground))] mb-2'>
                     {project.title}

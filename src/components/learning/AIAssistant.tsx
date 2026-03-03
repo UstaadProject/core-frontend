@@ -4,6 +4,125 @@ import { cn } from '@/lib/utils';
 import { askTutor } from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
 
+type ContentPart =
+  | { type: 'text'; value: string }
+  | { type: 'code'; value: string; language?: string };
+
+const parseContentParts = (content: string): ContentPart[] => {
+  const parts: ContentPart[] = [];
+  const codeRegex = /```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = codeRegex.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({
+        type: 'text',
+        value: content.slice(lastIndex, match.index).trim(),
+      });
+    }
+
+    parts.push({
+      type: 'code',
+      language: match[1],
+      value: match[2].trim(),
+    });
+
+    lastIndex = codeRegex.lastIndex;
+  }
+
+  if (lastIndex < content.length) {
+    parts.push({
+      type: 'text',
+      value: content.slice(lastIndex).trim(),
+    });
+  }
+
+  return parts.filter((part) => part.value.length > 0);
+};
+
+const renderTextBlock = (text: string) => {
+  const lines = text.split('\n').filter((line) => line.trim().length > 0);
+
+  return lines.map((line, index) => {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('### ')) {
+      return (
+        <h4 key={index} className='text-sm font-semibold mt-2 mb-1'>
+          {trimmed.replace('### ', '')}
+        </h4>
+      );
+    }
+
+    if (trimmed.startsWith('## ')) {
+      return (
+        <h3 key={index} className='text-base font-semibold mt-2 mb-1'>
+          {trimmed.replace('## ', '')}
+        </h3>
+      );
+    }
+
+    if (trimmed.startsWith('# ')) {
+      return (
+        <h2 key={index} className='text-lg font-bold mt-2 mb-1'>
+          {trimmed.replace('# ', '')}
+        </h2>
+      );
+    }
+
+    if (/^[-*]\s+/.test(trimmed)) {
+      return (
+        <div key={index} className='flex items-start gap-2 my-1'>
+          <span>•</span>
+          <span>{trimmed.replace(/^[-*]\s+/, '')}</span>
+        </div>
+      );
+    }
+
+    if (/^\d+\.\s+/.test(trimmed)) {
+      return (
+        <div key={index} className='my-1'>
+          {trimmed}
+        </div>
+      );
+    }
+
+    return (
+      <p key={index} className='my-1 whitespace-pre-wrap leading-relaxed'>
+        {trimmed}
+      </p>
+    );
+  });
+};
+
+function MessageContent({ content }: { content: string }) {
+  const parts = parseContentParts(content);
+
+  return (
+    <div className='space-y-2'>
+      {parts.map((part, index) => {
+        if (part.type === 'code') {
+          return (
+            <div key={index} className='my-2'>
+              {part.language && (
+                <div className='text-[10px] uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-1'>
+                  {part.language}
+                </div>
+              )}
+              <pre className='overflow-x-auto rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] p-3 text-xs'>
+                <code>{part.value}</code>
+              </pre>
+            </div>
+          );
+        }
+
+        return <div key={index}>{renderTextBlock(part.value)}</div>;
+      })}
+    </div>
+  );
+}
+
 interface AIAssistantProps {
   lessonTitle?: string;
   onClose?: () => void;
@@ -79,7 +198,7 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
           </div>
           <div>
             <h3 className='font-semibold text-[hsl(var(--foreground))]'>
-              AI Learning Assistant
+              Shagird
             </h3>
             <p className='text-xs text-[hsl(var(--muted-foreground))]'>
               Always here to help
@@ -114,7 +233,11 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
                   : 'bg-[hsl(var(--surface-elevated))] text-[hsl(var(--foreground))] rounded-bl-sm'
               )}
             >
-              {msg.content}
+              {msg.role === 'ai' ? (
+                <MessageContent content={msg.content} />
+              ) : (
+                msg.content
+              )}
             </div>
           </div>
         ))}

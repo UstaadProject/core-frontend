@@ -148,58 +148,81 @@ export default function Profile() {
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-4xl mx-auto space-y-6'>
-        <h1 className='text-3xl font-bold text-[hsl(var(--foreground))]'>
-          Profile
-        </h1>
+      <div className='ui-page-shell space-y-6'>
+        <div className='ui-page-header'>
+          <h1 className='ui-page-title'>Profile</h1>
+          <p className='ui-page-subtitle'>
+            Manage your personal details and account identity.
+          </p>
+        </div>
 
-        <div className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 space-y-4'>
-          <h2 className='text-lg font-semibold text-[hsl(var(--foreground))]'>
+        <div className='ui-surface-card p-6 space-y-4'>
+          <h2 className='ui-section-title'>
             Personal Information
           </h2>
-          <Input
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            placeholder='Full name'
-          />
-          <Input
-            value={form.location}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, location: e.target.value }))
-            }
-            placeholder='Location'
-          />
-          <Input
-            value={form.bio}
-            onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
-            placeholder='Bio'
-          />
-          <Input
-            value={form.website}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, website: e.target.value }))
-            }
-            placeholder='Website'
-          />
-          <Input
-            value={form.github}
-            onChange={(e) => setForm((p) => ({ ...p, github: e.target.value }))}
-            placeholder='GitHub'
-          />
-          <Input
-            value={form.linkedin}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, linkedin: e.target.value }))
-            }
-            placeholder='LinkedIn'
-          />
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <label>
+              <span className='ui-field-label'>Full name</span>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                placeholder='Full name'
+              />
+            </label>
+            <label>
+              <span className='ui-field-label'>Location</span>
+              <Input
+                value={form.location}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, location: e.target.value }))
+                }
+                placeholder='Location'
+              />
+            </label>
+            <label className='md:col-span-2'>
+              <span className='ui-field-label'>Bio</span>
+              <Input
+                value={form.bio}
+                onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
+                placeholder='Short bio'
+              />
+            </label>
+            <label>
+              <span className='ui-field-label'>Website</span>
+              <Input
+                value={form.website}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, website: e.target.value }))
+                }
+                placeholder='https://your-site.com'
+              />
+            </label>
+            <label>
+              <span className='ui-field-label'>GitHub</span>
+              <Input
+                value={form.github}
+                onChange={(e) => setForm((p) => ({ ...p, github: e.target.value }))}
+                placeholder='github.com/username'
+              />
+            </label>
+            <label className='md:col-span-2'>
+              <span className='ui-field-label'>LinkedIn</span>
+              <Input
+                value={form.linkedin}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, linkedin: e.target.value }))
+                }
+                placeholder='linkedin.com/in/username'
+              />
+            </label>
+          </div>
           <Button onClick={handleSaveProfile} disabled={saving}>
             {saving ? 'Saving...' : 'Save Profile'}
           </Button>
         </div>
 
-        <div className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 space-y-4'>
-          <h2 className='text-lg font-semibold text-[hsl(var(--foreground))]'>
+        <div className='ui-surface-card p-6 space-y-4'>
+          <h2 className='ui-section-title'>
             Email & Verification
           </h2>
           <div className='text-sm text-[hsl(var(--muted-foreground))]'>
@@ -207,9 +230,9 @@ export default function Profile() {
           </div>
           <div className='text-sm'>
             {auth.currentUser?.emailVerified ? (
-              <span className='text-[hsl(var(--success))]'>Email verified</span>
+              <span className='ui-chip text-[hsl(var(--success))]'>Email verified</span>
             ) : (
-              <span className='text-[hsl(var(--destructive))]'>
+              <span className='ui-chip text-[hsl(var(--destructive))]'>
                 Email not verified
               </span>
             )}

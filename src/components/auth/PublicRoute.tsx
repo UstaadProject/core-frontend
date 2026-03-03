@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { onAuthStateChange } from '@/services/firebase/firebase';
 
 interface PublicRouteProps {
-  children: JSX.Element;
+  children: ReactNode;
 }
 
 export function PublicRoute({ children }: PublicRouteProps) {

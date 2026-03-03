@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { onAuthStateChange } from '@/services/firebase/firebase';
 
 interface ProtectedRouteProps {
-  children: JSX.Element;
+  children: ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
