@@ -41,7 +41,7 @@ export const routes: AppRoute[] = [
     element: <LearningPath />,
   },
   {
-    path: '/lesson/:lessonId',
+    path: '/lesson/:moduleId/:topic',
     element: <LessonDetail />,
   },
   {

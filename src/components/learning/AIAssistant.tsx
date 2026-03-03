@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Sparkles, Send, X } from 'lucide-react';
+import { Sparkles, Send, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { askTutor } from '@/services/api/learningApi';
+import { useToast } from '@/hooks/use-toast';
 
 interface AIAssistantProps {
   lessonTitle?: string;
@@ -16,30 +18,55 @@ const quickPrompts = [
 
 export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const [messages, setMessages] = useState<
     { role: 'user' | 'ai'; content: string }[]
   >([
     {
       role: 'ai',
-      content: `Hi! I'm your AI learning assistant. I'm here to help you understand "${lessonTitle || 'this lesson'}" better. Feel free to ask me anything!`,
+      content: `Hi! I'm your AI learning assistant. I'm here to help you with your web development journey. Feel free to ask me anything about ${lessonTitle || 'your lessons'}!`,
     },
   ]);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
-    setMessages((prev) => [...prev, { role: 'user', content: message }]);
+  const handleSend = async () => {
+    if (!message.trim() || isLoading) return;
+
+    const userMessage = message.trim();
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setMessage('');
-    // Simulate AI response
-    setTimeout(() => {
+    setIsLoading(true);
+
+    try {
+      const response = await askTutor(userMessage);
       setMessages((prev) => [
         ...prev,
         {
           role: 'ai',
           content:
-            "That's a great question! Let me explain this concept in detail...",
+            response.content ||
+            "I'm sorry, I couldn't process your question. Please try again.",
         },
       ]);
-    }, 1000);
+    } catch (error) {
+      // Fallback to a helpful response if API fails
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          content:
+            "I'm having trouble connecting right now. Please make sure you're viewing a lesson topic first, then I can help you better!",
+        },
+      ]);
+      toast({
+        title: 'Connection issue',
+        description:
+          'Make sure you have selected a lesson topic to get AI assistance.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -91,6 +118,13 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
             </div>
           </div>
         ))}
+        {isLoading && (
+          <div className='flex justify-start'>
+            <div className='px-4 py-3 rounded-2xl rounded-bl-sm bg-[hsl(var(--surface-elevated))]'>
+              <Loader2 className='w-4 h-4 animate-spin text-[hsl(var(--muted-foreground))]' />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick Prompts */}
@@ -100,7 +134,8 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
             <button
               key={prompt}
               onClick={() => setMessage(prompt)}
-              className='px-3 py-1.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--primary))] transition-colors'
+              disabled={isLoading}
+              className='px-3 py-1.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--primary))] transition-colors disabled:opacity-50'
             >
               {prompt}
             </button>
@@ -116,14 +151,20 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder='Ask anything about this lesson...'
-            className='flex-1 bg-transparent text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-text))] focus:outline-none'
+            placeholder='Ask anything about your lessons...'
+            disabled={isLoading}
+            className='flex-1 bg-transparent text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-text))] focus:outline-none disabled:opacity-50'
           />
           <button
             onClick={handleSend}
-            className='p-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity'
+            disabled={isLoading || !message.trim()}
+            className='p-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity disabled:opacity-50'
           >
-            <Send className='w-4 h-4' />
+            {isLoading ? (
+              <Loader2 className='w-4 h-4 animate-spin' />
+            ) : (
+              <Send className='w-4 h-4' />
+            )}
           </button>
         </div>
       </div>

@@ -245,7 +245,9 @@ const timeOptions = [
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [phase, setPhase] = useState<'preferences' | 'quiz'>('preferences');
+  const [phase, setPhase] = useState<'preferences' | 'quiz' | 'generating'>(
+    'preferences'
+  );
   const [quiz, setQuiz] = useState<GeneratedQuiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
@@ -358,6 +360,7 @@ const Onboarding = () => {
   const handleSubmitQuizAndComplete = async () => {
     try {
       setIsLoading(true);
+      setPhase('generating');
       await submitOnboardingQuiz(quizAnswers);
       await completeOnboarding(selections);
 
@@ -367,6 +370,7 @@ const Onboarding = () => {
       });
       navigate('/dashboard');
     } catch (error) {
+      setPhase('quiz');
       toast({
         title: 'Onboarding failed',
         description:
@@ -450,10 +454,14 @@ const Onboarding = () => {
                 />
               ))}
             </div>
-          ) : (
+          ) : phase === 'quiz' ? (
             <p className='text-sm text-muted-foreground'>
               Question {currentQuestionIndex + 1} of{' '}
               {quiz?.questions.length || 0}
+            </p>
+          ) : (
+            <p className='text-sm text-muted-foreground'>
+              Generating your path...
             </p>
           )}
         </div>
@@ -527,6 +535,23 @@ const Onboarding = () => {
               </div>
             </div>
           )}
+
+          {phase === 'generating' && (
+            <div className='animate-slide-up flex flex-col items-center justify-center text-center'>
+              <div className='w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-6' />
+              <h1 className='text-2xl md:text-3xl font-bold text-foreground mb-2'>
+                Creating Your Learning Path
+              </h1>
+              <p className='text-muted-foreground mb-4 max-w-md'>
+                Our AI is analyzing your quiz results and creating a
+                personalized learning journey just for you...
+              </p>
+              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                <Sparkles className='w-4 h-4 text-primary animate-pulse' />
+                <span>This may take a moment</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className='flex items-center justify-between pt-8'>
@@ -534,7 +559,9 @@ const Onboarding = () => {
             variant='ghost'
             onClick={handleBack}
             disabled={
-              isLoading || (phase === 'preferences' && currentStep === 0)
+              isLoading ||
+              (phase === 'preferences' && currentStep === 0) ||
+              phase === 'generating'
             }
             className='gap-2'
           >
@@ -559,7 +586,7 @@ const Onboarding = () => {
                 </>
               )}
             </Button>
-          ) : (
+          ) : phase === 'quiz' ? (
             <Button
               variant='gradient'
               size='lg'
@@ -578,7 +605,7 @@ const Onboarding = () => {
                 </>
               )}
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

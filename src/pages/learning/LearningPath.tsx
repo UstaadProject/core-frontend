@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown,
@@ -7,203 +7,50 @@ import {
   CheckCircle2,
   Circle,
   Lock,
-  Clock,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LearningLayout } from '@/components/layout/LearningLayout';
+import {
+  getLearningPath,
+  type FullLearningPath,
+  type FullModule,
+} from '@/services/api/learningApi';
+import { useToast } from '@/hooks/use-toast';
 
-interface Lesson {
-  id: string;
-  title: string;
-  duration: string;
-  status: 'completed' | 'in-progress' | 'locked';
+interface ModuleCardProps {
+  module: FullModule;
+  index: number;
+  totalModules: number;
 }
 
-interface Module {
-  id: string;
-  title: string;
-  description: string;
-  lessons: Lesson[];
-  status: 'completed' | 'in-progress' | 'locked';
-}
-
-const learningPathData: Module[] = [
-  {
-    id: '1',
-    title: 'HTML & CSS Fundamentals',
-    description: 'Master the building blocks of the web',
-    status: 'completed',
-    lessons: [
-      {
-        id: '1-1',
-        title: 'Introduction to HTML and CSS',
-        duration: '15 min',
-        status: 'completed',
-      },
-      {
-        id: '1-2',
-        title: 'Elements and Tags',
-        duration: '20 min',
-        status: 'completed',
-      },
-      {
-        id: '1-3',
-        title: 'HTML Boilerplate',
-        duration: '10 min',
-        status: 'completed',
-      },
-      {
-        id: '1-4',
-        title: 'Working with Text',
-        duration: '25 min',
-        status: 'completed',
-      },
-      {
-        id: '1-5',
-        title: 'Lists and Links',
-        duration: '20 min',
-        status: 'completed',
-      },
-    ],
-  },
-  {
-    id: '2',
-    title: 'JavaScript Essentials',
-    description: 'Learn the language of the web',
-    status: 'completed',
-    lessons: [
-      {
-        id: '2-1',
-        title: 'Introduction to JavaScript',
-        duration: '20 min',
-        status: 'completed',
-      },
-      {
-        id: '2-2',
-        title: 'Variables and Data Types',
-        duration: '30 min',
-        status: 'completed',
-      },
-      {
-        id: '2-3',
-        title: 'Functions and Scope',
-        duration: '35 min',
-        status: 'completed',
-      },
-      {
-        id: '2-4',
-        title: 'DOM Manipulation',
-        duration: '40 min',
-        status: 'completed',
-      },
-    ],
-  },
-  {
-    id: '3',
-    title: 'React Foundations',
-    description: 'Build modern user interfaces',
-    status: 'in-progress',
-    lessons: [
-      {
-        id: '3-1',
-        title: 'Introduction to React',
-        duration: '25 min',
-        status: 'completed',
-      },
-      {
-        id: '3-2',
-        title: 'Components and Props',
-        duration: '30 min',
-        status: 'completed',
-      },
-      {
-        id: '3-3',
-        title: 'State and Hooks',
-        duration: '40 min',
-        status: 'in-progress',
-      },
-      {
-        id: '3-4',
-        title: 'Event Handling',
-        duration: '25 min',
-        status: 'locked',
-      },
-      {
-        id: '3-5',
-        title: 'Conditional Rendering',
-        duration: '20 min',
-        status: 'locked',
-      },
-    ],
-  },
-  {
-    id: '4',
-    title: 'Building Your Portfolio',
-    description: 'Showcase your skills professionally',
-    status: 'locked',
-    lessons: [
-      {
-        id: '4-1',
-        title: 'Portfolio Planning',
-        duration: '20 min',
-        status: 'locked',
-      },
-      {
-        id: '4-2',
-        title: 'Project Selection',
-        duration: '15 min',
-        status: 'locked',
-      },
-      {
-        id: '4-3',
-        title: 'Design Principles',
-        duration: '30 min',
-        status: 'locked',
-      },
-      {
-        id: '4-4',
-        title: 'Deployment Basics',
-        duration: '25 min',
-        status: 'locked',
-      },
-    ],
-  },
-  {
-    id: '5',
-    title: 'Freelance Client Skills',
-    description: 'Turn your skills into income',
-    status: 'locked',
-    lessons: [
-      {
-        id: '5-1',
-        title: 'Finding Clients',
-        duration: '25 min',
-        status: 'locked',
-      },
-      {
-        id: '5-2',
-        title: 'Pricing Your Work',
-        duration: '20 min',
-        status: 'locked',
-      },
-      {
-        id: '5-3',
-        title: 'Client Communication',
-        duration: '30 min',
-        status: 'locked',
-      },
-    ],
-  },
-];
-
-function ModuleCard({ module, index }: { module: Module; index: number }) {
+function ModuleCard({ module, index, totalModules }: ModuleCardProps) {
   const [isExpanded, setIsExpanded] = useState(module.status === 'in-progress');
   const navigate = useNavigate();
 
-  const completedLessons = module.lessons.filter(
-    (l) => l.status === 'completed'
-  ).length;
-  const progress = (completedLessons / module.lessons.length) * 100;
+  const completedTopics = module.completedTopics?.length || 0;
+  const totalTopics = module.topics?.length || 0;
+  const progress = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
+
+  const getTopicStatus = (topic: string) => {
+    if (module.completedTopics?.includes(topic)) return 'completed';
+    if (module.status === 'pending') return 'locked';
+    // First incomplete topic in an in-progress module
+    const firstIncomplete = module.topics.find(
+      (t) => !module.completedTopics?.includes(t)
+    );
+    if (topic === firstIncomplete && module.status === 'in-progress')
+      return 'in-progress';
+    // Check if previous topics are complete
+    const topicIndex = module.topics.indexOf(topic);
+    const previousTopics = module.topics.slice(0, topicIndex);
+    const allPreviousComplete = previousTopics.every((t) =>
+      module.completedTopics?.includes(t)
+    );
+    return allPreviousComplete && module.status === 'in-progress'
+      ? 'available'
+      : 'locked';
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -220,7 +67,7 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
     }
   };
 
-  const getLessonIcon = (status: string) => {
+  const getTopicIcon = (status: string) => {
     switch (status) {
       case 'completed':
         return <CheckCircle2 className='w-4 h-4 text-[hsl(var(--success))]' />;
@@ -228,9 +75,17 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
         return (
           <Circle className='w-4 h-4 text-[hsl(var(--primary))] fill-[hsl(var(--primary)/0.3)]' />
         );
+      case 'available':
+        return <Circle className='w-4 h-4 text-[hsl(var(--primary))]' />;
       default:
         return <Circle className='w-4 h-4 text-[hsl(var(--muted-text))]' />;
     }
+  };
+
+  const handleTopicClick = (topic: string, status: string) => {
+    if (status === 'locked') return;
+    // Navigate to topic/lesson page with module and topic info
+    navigate(`/lesson/${module.id}/${encodeURIComponent(topic)}`);
   };
 
   return (
@@ -240,24 +95,26 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
         module.status === 'in-progress'
           ? 'border-[hsl(var(--primary)/0.5)] shadow-[0_0_30px_hsl(var(--primary)/0.1)]'
           : 'border-[hsl(var(--border))]',
-        module.status === 'locked' && 'opacity-60'
+        module.status === 'pending' && 'opacity-60'
       )}
       style={{ animationDelay: `${index * 0.1}s` }}
     >
       {/* Module Header */}
       <button
-        onClick={() => module.status !== 'locked' && setIsExpanded(!isExpanded)}
+        onClick={() =>
+          module.status !== 'pending' && setIsExpanded(!isExpanded)
+        }
         className={cn(
           'w-full flex items-center gap-4 p-5 text-left',
-          module.status !== 'locked' && 'hover:bg-[hsl(var(--muted)/0.3)]',
+          module.status !== 'pending' && 'hover:bg-[hsl(var(--muted)/0.3)]',
           'transition-colors rounded-xl'
         )}
-        disabled={module.status === 'locked'}
+        disabled={module.status === 'pending'}
       >
         {/* Status & Timeline */}
         <div className='flex flex-col items-center'>
           {getStatusIcon(module.status)}
-          {index < learningPathData.length - 1 && (
+          {index < totalModules - 1 && (
             <div
               className={cn(
                 'w-0.5 h-8 mt-2',
@@ -275,10 +132,10 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
             {module.title}
           </h3>
           <p className='text-sm text-[hsl(var(--muted-foreground))] mt-0.5'>
-            {module.description}
+            {module.difficulty} • {totalTopics} topics
           </p>
 
-          {module.status !== 'locked' && (
+          {module.status !== 'pending' && (
             <div className='flex items-center gap-4 mt-3'>
               <div className='flex-1 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
                 <div
@@ -287,14 +144,14 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
                 />
               </div>
               <span className='text-xs text-[hsl(var(--muted-foreground))] whitespace-nowrap'>
-                {completedLessons}/{module.lessons.length} lessons
+                {completedTopics}/{totalTopics} topics
               </span>
             </div>
           )}
         </div>
 
         {/* Expand Icon */}
-        {module.status !== 'locked' && (
+        {module.status !== 'pending' && (
           <div className='text-[hsl(var(--muted-foreground))]'>
             {isExpanded ? (
               <ChevronDown className='w-5 h-5' />
@@ -305,49 +162,51 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
         )}
       </button>
 
-      {/* Lessons List */}
-      {isExpanded && module.status !== 'locked' && (
+      {/* Topics List */}
+      {isExpanded && module.status !== 'pending' && (
         <div className='px-5 pb-5 pl-16 stagger-children'>
           <div className='space-y-1'>
-            {module.lessons.map((lesson) => (
-              <button
-                key={lesson.id}
-                onClick={() =>
-                  lesson.status !== 'locked' && navigate(`/lesson/${lesson.id}`)
-                }
-                disabled={lesson.status === 'locked'}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all',
-                  lesson.status === 'locked'
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer',
-                  lesson.status === 'in-progress' &&
-                    'bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.3)]'
-                )}
-              >
-                {getLessonIcon(lesson.status)}
-                <BookOpen className='w-4 h-4 text-[hsl(var(--muted-foreground))]' />
-                <span
+            {module.topics.map((topic) => {
+              const topicStatus = getTopicStatus(topic);
+              return (
+                <button
+                  key={topic}
+                  onClick={() => handleTopicClick(topic, topicStatus)}
+                  disabled={topicStatus === 'locked'}
                   className={cn(
-                    'flex-1 text-sm',
-                    lesson.status === 'completed'
-                      ? 'text-[hsl(var(--muted-foreground))]'
-                      : 'text-[hsl(var(--foreground))]'
+                    'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all',
+                    topicStatus === 'locked'
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer',
+                    topicStatus === 'in-progress' &&
+                      'bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.3)]'
                   )}
                 >
-                  {lesson.title}
-                </span>
-                <div className='flex items-center gap-1 text-xs text-[hsl(var(--muted-text))]'>
-                  <Clock className='w-3 h-3' />
-                  {lesson.duration}
-                </div>
-                {lesson.status === 'in-progress' && (
-                  <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'>
-                    Continue
+                  {getTopicIcon(topicStatus)}
+                  <BookOpen className='w-4 h-4 text-[hsl(var(--muted-foreground))]' />
+                  <span
+                    className={cn(
+                      'flex-1 text-sm',
+                      topicStatus === 'completed'
+                        ? 'text-[hsl(var(--muted-foreground))]'
+                        : 'text-[hsl(var(--foreground))]'
+                    )}
+                  >
+                    {topic}
                   </span>
-                )}
-              </button>
-            ))}
+                  {topicStatus === 'in-progress' && (
+                    <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'>
+                      Continue
+                    </span>
+                  )}
+                  {topicStatus === 'available' && (
+                    <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]'>
+                      Start
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -356,7 +215,70 @@ function ModuleCard({ module, index }: { module: Module; index: number }) {
 }
 
 export default function LearningPath() {
-  const completedModules = learningPathData.filter(
+  const [loading, setLoading] = useState(true);
+  const [learningData, setLearningData] = useState<FullLearningPath | null>(
+    null
+  );
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchLearningPath = async () => {
+      try {
+        setLoading(true);
+        const data = await getLearningPath();
+        setLearningData(data);
+      } catch (error) {
+        toast({
+          title: 'Failed to load learning path',
+          description:
+            error instanceof Error ? error.message : 'Please try again later',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLearningPath();
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <LearningLayout>
+        <div className='flex items-center justify-center h-screen'>
+          <div className='flex flex-col items-center gap-4'>
+            <Loader2 className='w-8 h-8 animate-spin text-[hsl(var(--primary))]' />
+            <p className='text-[hsl(var(--muted-foreground))]'>
+              Loading your learning path...
+            </p>
+          </div>
+        </div>
+      </LearningLayout>
+    );
+  }
+
+  if (!learningData?.learningPath?.modules?.length) {
+    return (
+      <LearningLayout>
+        <div className='flex items-center justify-center h-screen'>
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <BookOpen className='w-12 h-12 text-[hsl(var(--muted-foreground))]' />
+            <h2 className='text-xl font-semibold text-[hsl(var(--foreground))]'>
+              No Learning Path Found
+            </h2>
+            <p className='text-[hsl(var(--muted-foreground))] max-w-md'>
+              It looks like your learning path hasn't been generated yet. Please
+              complete the onboarding quiz to get started.
+            </p>
+          </div>
+        </div>
+      </LearningLayout>
+    );
+  }
+
+  const { learningPath } = learningData;
+  const modules = learningPath.modules;
+  const completedModules = modules.filter(
     (m) => m.status === 'completed'
   ).length;
 
@@ -369,7 +291,7 @@ export default function LearningPath() {
             Learning Path
           </h1>
           <p className='text-[hsl(var(--muted-foreground))] mt-2'>
-            Your journey to becoming a React freelancer
+            Your personalized {learningPath.level} web development journey
           </p>
 
           {/* Progress Overview */}
@@ -380,14 +302,14 @@ export default function LearningPath() {
                   Overall Progress
                 </span>
                 <span className='text-sm font-medium text-[hsl(var(--primary))]'>
-                  {completedModules} of {learningPathData.length} modules
+                  {completedModules} of {modules.length} modules
                 </span>
               </div>
               <div className='h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
                 <div
                   className='h-full bg-linear-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] rounded-full transition-all duration-700'
                   style={{
-                    width: `${(completedModules / learningPathData.length) * 100}%`,
+                    width: `${(completedModules / modules.length) * 100}%`,
                   }}
                 />
               </div>
@@ -397,8 +319,13 @@ export default function LearningPath() {
 
         {/* Modules */}
         <div className='space-y-4 stagger-children'>
-          {learningPathData.map((module, index) => (
-            <ModuleCard key={module.id} module={module} index={index} />
+          {modules.map((module, index) => (
+            <ModuleCard
+              key={module.id}
+              module={module}
+              index={index}
+              totalModules={modules.length}
+            />
           ))}
         </div>
       </div>
