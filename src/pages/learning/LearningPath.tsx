@@ -343,9 +343,7 @@ export default function LearningPath() {
       <div className='ui-page-shell max-w-4xl h-screen'>
         {/* Header */}
         <div className='ui-page-header mb-8 animate-fade-in'>
-          <h1 className='ui-page-title'>
-            Learning Path
-          </h1>
+          <h1 className='ui-page-title'>Learning Path</h1>
           <p className='ui-page-subtitle'>
             Your personalized {learningPath.level} web development journey
           </p>

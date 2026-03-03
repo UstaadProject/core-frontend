@@ -368,13 +368,9 @@ export default function LessonDetail() {
               <span className='ui-chip bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.3)]'>
                 {content.difficulty}
               </span>
-              <span className='ui-chip'>
-                {content.module}
-              </span>
+              <span className='ui-chip'>{content.module}</span>
             </div>
-            <h1 className='ui-page-title'>
-              {content.topic}
-            </h1>
+            <h1 className='ui-page-title'>{content.topic}</h1>
           </div>
 
           {/* Main Content */}

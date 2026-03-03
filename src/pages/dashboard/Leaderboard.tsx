@@ -69,10 +69,7 @@ export default function Leaderboard() {
 
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
           {topThree.map((user, index) => (
-            <div
-              key={user.email}
-              className='ui-surface-card p-5'
-            >
+            <div key={user.email} className='ui-surface-card p-5'>
               <div className='flex items-center justify-between mb-4'>
                 <div className='flex items-center gap-2'>
                   <Medal className='w-5 h-5 text-[hsl(var(--primary))]' />

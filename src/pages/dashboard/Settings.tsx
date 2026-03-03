@@ -122,9 +122,7 @@ export default function Settings() {
         </div>
 
         <div className='ui-surface-card p-6 space-y-5'>
-          <h2 className='ui-section-title'>
-            Notifications & Preferences
-          </h2>
+          <h2 className='ui-section-title'>Notifications & Preferences</h2>
 
           {[
             ['emailNotifications', 'Email Notifications'],
@@ -153,9 +151,7 @@ export default function Settings() {
           ))}
 
           <label className='block'>
-            <span className='ui-field-label'>
-              Theme
-            </span>
+            <span className='ui-field-label'>Theme</span>
             <select
               value={settings.theme}
               onChange={(e) =>
@@ -175,9 +171,7 @@ export default function Settings() {
         </div>
 
         <div className='ui-surface-card p-6 space-y-4'>
-          <h2 className='ui-section-title'>
-            Security
-          </h2>
+          <h2 className='ui-section-title'>Security</h2>
           <label>
             <span className='ui-field-label'>Current password</span>
             <Input

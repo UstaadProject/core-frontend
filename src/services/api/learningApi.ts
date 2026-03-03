@@ -139,9 +139,7 @@ const normalizeResumeData = (data: unknown): ResumeData => {
   const projectsRaw = Array.isArray(raw.projects) ? raw.projects : [];
   const projects: ResumeProject[] = projectsRaw.map((item, index) => {
     const project =
-      item && typeof item === 'object'
-        ? (item as Record<string, unknown>)
-        : {};
+      item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
 
     const title =
       typeof project.title === 'string' && project.title.trim().length > 0
@@ -281,7 +279,7 @@ export const buildResume = async (options?: {
   const response = await authFetch(
     `/learning/resume${shouldRegenerate ? '?regenerate=true' : ''}`,
     {
-    method: 'GET',
+      method: 'GET',
     }
   );
   const json = await parseJson(response);

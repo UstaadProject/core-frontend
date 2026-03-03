@@ -157,15 +157,15 @@ export default function Profile() {
         </div>
 
         <div className='ui-surface-card p-6 space-y-4'>
-          <h2 className='ui-section-title'>
-            Personal Information
-          </h2>
+          <h2 className='ui-section-title'>Personal Information</h2>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <label>
               <span className='ui-field-label'>Full name</span>
               <Input
                 value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, name: e.target.value }))
+                }
                 placeholder='Full name'
               />
             </label>
@@ -183,7 +183,9 @@ export default function Profile() {
               <span className='ui-field-label'>Bio</span>
               <Input
                 value={form.bio}
-                onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, bio: e.target.value }))
+                }
                 placeholder='Short bio'
               />
             </label>
@@ -201,7 +203,9 @@ export default function Profile() {
               <span className='ui-field-label'>GitHub</span>
               <Input
                 value={form.github}
-                onChange={(e) => setForm((p) => ({ ...p, github: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, github: e.target.value }))
+                }
                 placeholder='github.com/username'
               />
             </label>
@@ -222,15 +226,15 @@ export default function Profile() {
         </div>
 
         <div className='ui-surface-card p-6 space-y-4'>
-          <h2 className='ui-section-title'>
-            Email & Verification
-          </h2>
+          <h2 className='ui-section-title'>Email & Verification</h2>
           <div className='text-sm text-[hsl(var(--muted-foreground))]'>
             Current email: {user?.email}
           </div>
           <div className='text-sm'>
             {auth.currentUser?.emailVerified ? (
-              <span className='ui-chip text-[hsl(var(--success))]'>Email verified</span>
+              <span className='ui-chip text-[hsl(var(--success))]'>
+                Email verified
+              </span>
             ) : (
               <span className='ui-chip text-[hsl(var(--destructive))]'>
                 Email not verified
