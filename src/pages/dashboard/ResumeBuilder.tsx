@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FileText, Loader2, Download, Sparkles } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { buildResume, type ResumeData } from '@/services/api/learningApi';
+import {
+  buildResume,
+  getResumeTemplates,
+  getSubmittedProjects,
+  type ResumeData,
+  type ResumeTemplate,
+  type SubmittedProject,
+} from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 
@@ -164,20 +172,59 @@ function RichTextContent({ content }: { content: string }) {
 }
 
 export default function ResumeBuilder() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
+  const [contextLoading, setContextLoading] = useState(true);
+  const [templates, setTemplates] = useState<ResumeTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('modern-tech');
+  const [submittedProjects, setSubmittedProjects] = useState<SubmittedProject[]>(
+    []
+  );
   const [resume, setResume] = useState<ResumeData | null>(null);
   const { toast } = useToast();
-  const hasFetchedRef = useRef(false);
+  const hasFetchedContextRef = useRef(false);
 
   useEffect(() => {
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
+    if (hasFetchedContextRef.current) return;
+    hasFetchedContextRef.current = true;
+
+    const fetchContext = async () => {
+      try {
+        setContextLoading(true);
+        const [templateData, projectData] = await Promise.all([
+          getResumeTemplates(),
+          getSubmittedProjects(),
+        ]);
+
+        setTemplates(templateData.templates || []);
+        setSubmittedProjects(projectData || []);
+
+        if (templateData.templates?.length) {
+          setSelectedTemplateId(templateData.templates[0].id);
+        }
+      } catch (error) {
+        toast({
+          title: 'Failed to load resume context',
+          description:
+            error instanceof Error ? error.message : 'Please try again later',
+          variant: 'destructive',
+        });
+      } finally {
+        setContextLoading(false);
+      }
+    };
+
+    fetchContext();
+  }, [toast]);
+
+  useEffect(() => {
+    if (!selectedTemplateId) return;
 
     const fetchResume = async () => {
       try {
         setLoading(true);
-        const data = await buildResume();
+        const data = await buildResume({ templateId: selectedTemplateId });
         setResume(data);
       } catch (error) {
         toast({
@@ -192,7 +239,7 @@ export default function ResumeBuilder() {
     };
 
     fetchResume();
-  }, [toast]);
+  }, [selectedTemplateId, toast]);
 
   const handlePrint = () => {
     window.print();
@@ -201,7 +248,10 @@ export default function ResumeBuilder() {
   const handleRegenerate = async () => {
     try {
       setRegenerating(true);
-      const data = await buildResume({ regenerate: true });
+      const data = await buildResume({
+        regenerate: true,
+        templateId: selectedTemplateId,
+      });
       setResume(data);
       toast({
         title: 'Resume regenerated',
@@ -256,8 +306,8 @@ export default function ResumeBuilder() {
               Resume Builder
             </h1>
             <p className='ui-page-subtitle'>
-              Generated from your profile, learning progress, and AI project
-              summaries.
+              Generated from your profile and submitted project work, using your
+              selected template.
             </p>
           </div>
           <div className='flex items-center gap-2'>
@@ -283,6 +333,99 @@ export default function ResumeBuilder() {
               Download / Print
             </Button>
           </div>
+        </div>
+
+        <div className='ui-surface-card p-5 mb-6 space-y-4'>
+          <div className='flex items-center justify-between gap-3'>
+            <h3 className='ui-section-title'>Resume Template</h3>
+            <span className='ui-chip'>
+              {submittedProjects.length} submitted project
+              {submittedProjects.length === 1 ? '' : 's'}
+            </span>
+          </div>
+
+          {contextLoading ? (
+            <div className='flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]'>
+              <Loader2 className='w-4 h-4 animate-spin' />
+              Loading templates...
+            </div>
+          ) : (
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
+              {templates.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => setSelectedTemplateId(template.id)}
+                  className={`rounded-lg border p-3 text-left transition-colors ${
+                    selectedTemplateId === template.id
+                      ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.08)]'
+                      : 'border-[hsl(var(--border))] bg-[hsl(var(--background)/0.4)] hover:border-[hsl(var(--primary)/0.5)]'
+                  }`}
+                >
+                  <p className='font-medium text-[hsl(var(--foreground))]'>
+                    {template.name}
+                  </p>
+                  <p className='text-xs text-[hsl(var(--muted-foreground))] mt-1'>
+                    {template.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {resume.profileCompletion && !resume.profileCompletion.isComplete && (
+            <div className='rounded-lg border border-[hsl(var(--warning)/0.5)] bg-[hsl(var(--warning)/0.08)] p-4'>
+              <p className='text-sm font-medium text-[hsl(var(--foreground))]'>
+                Complete your profile for a stronger resume
+              </p>
+              <p className='text-xs text-[hsl(var(--muted-foreground))] mt-1'>
+                Missing fields for this template:
+              </p>
+              <div className='flex flex-wrap gap-2 mt-2'>
+                {resume.profileCompletion.missingFields.map((item) => (
+                  <span key={item.field} className='ui-chip'>
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+              <Button
+                variant='outline'
+                className='mt-3'
+                onClick={() => navigate('/profile')}
+              >
+                Go to Profile
+              </Button>
+            </div>
+          )}
+
+          {submittedProjects.length === 0 && (
+            <div className='rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.45)] p-4 text-sm text-[hsl(var(--muted-foreground))]'>
+              No submitted projects yet. Submit a mini project from lesson detail
+              pages to include real project work in your resume.
+            </div>
+          )}
+
+          {submittedProjects.length > 0 && (
+            <div className='rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.45)] p-4'>
+              <p className='text-sm font-medium text-[hsl(var(--foreground))] mb-2'>
+                Included Submitted Projects
+              </p>
+              <div className='space-y-2'>
+                {submittedProjects.slice(0, 5).map((project) => (
+                  <div
+                    key={project._id}
+                    className='rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.6)] p-2'
+                  >
+                    <p className='text-sm font-medium text-[hsl(var(--foreground))]'>
+                      {project.title}
+                    </p>
+                    <p className='text-xs text-[hsl(var(--muted-foreground))]'>
+                      {project.moduleId} • {project.topic}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className='ui-surface-card p-8 space-y-8'>

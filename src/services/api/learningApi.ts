@@ -109,6 +109,16 @@ export interface ResumeProject {
 }
 
 export interface ResumeData {
+  template?: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  profileCompletion?: {
+    isComplete: boolean;
+    missingFields: Array<{ field: string; label: string }>;
+  };
+  submittedProjectsCount?: number;
   profile: {
     name: string;
     email: string;
@@ -157,6 +167,52 @@ const normalizeResumeData = (data: unknown): ResumeData => {
   });
 
   return {
+    template:
+      raw.template && typeof raw.template === 'object'
+        ? {
+            id:
+              typeof (raw.template as Record<string, unknown>).id === 'string'
+                ? ((raw.template as Record<string, unknown>).id as string)
+                : 'modern-tech',
+            name:
+              typeof (raw.template as Record<string, unknown>).name === 'string'
+                ? ((raw.template as Record<string, unknown>).name as string)
+                : 'Modern Tech',
+            description:
+              typeof (raw.template as Record<string, unknown>).description ===
+              'string'
+                ? ((raw.template as Record<string, unknown>)
+                    .description as string)
+                : '',
+          }
+        : undefined,
+    profileCompletion:
+      raw.profileCompletion && typeof raw.profileCompletion === 'object'
+        ? {
+            isComplete:
+              (raw.profileCompletion as Record<string, unknown>).isComplete ===
+              true,
+            missingFields: Array.isArray(
+              (raw.profileCompletion as Record<string, unknown>).missingFields
+            )
+              ? (
+                  (raw.profileCompletion as Record<string, unknown>)
+                    .missingFields as Array<Record<string, unknown>>
+                )
+                  .filter((item) => item && typeof item === 'object')
+                  .map((item) => ({
+                    field:
+                      typeof item.field === 'string' ? item.field : 'unknown',
+                    label:
+                      typeof item.label === 'string' ? item.label : 'Unknown',
+                  }))
+              : [],
+          }
+        : undefined,
+    submittedProjectsCount:
+      typeof raw.submittedProjectsCount === 'number'
+        ? raw.submittedProjectsCount
+        : undefined,
     profile: {
       name:
         typeof profileRaw.name === 'string' ? profileRaw.name : 'Learner Name',
@@ -179,6 +235,27 @@ export interface AchievementItem {
   badge: string;
   unlocked?: boolean;
   unlockedAt?: string;
+}
+
+export interface ResumeTemplate {
+  id: string;
+  name: string;
+  description: string;
+  requiredProfileFields: string[];
+  missingProfileFields: Array<{ field: string; label: string }>;
+}
+
+export interface SubmittedProject {
+  _id: string;
+  moduleId: string;
+  topic: string;
+  title: string;
+  summary: string;
+  repositoryUrl?: string;
+  liveUrl?: string;
+  techStack: string[];
+  status: 'submitted' | 'approved' | 'rejected';
+  submittedAt: string;
 }
 
 const parseJson = async (response: Response) => {
@@ -274,16 +351,56 @@ export const getLeaderboard = async (): Promise<LeaderboardUser[]> => {
 
 export const buildResume = async (options?: {
   regenerate?: boolean;
+  templateId?: string;
 }): Promise<ResumeData> => {
-  const shouldRegenerate = options?.regenerate === true;
+  const params = new URLSearchParams();
+  if (options?.regenerate === true) params.set('regenerate', 'true');
+  if (options?.templateId) params.set('templateId', options.templateId);
+  const query = params.toString();
   const response = await authFetch(
-    `/learning/resume${shouldRegenerate ? '?regenerate=true' : ''}`,
+    `/learning/resume${query ? `?${query}` : ''}`,
     {
       method: 'GET',
     }
   );
   const json = await parseJson(response);
   return normalizeResumeData(json.data);
+};
+
+export const getResumeTemplates = async () => {
+  const response = await authFetch('/learning/resume/templates', {
+    method: 'GET',
+  });
+  const json = await parseJson(response);
+  return json.data as {
+    templates: ResumeTemplate[];
+    submittedProjectsCount: number;
+  };
+};
+
+export const getSubmittedProjects = async (): Promise<SubmittedProject[]> => {
+  const response = await authFetch('/learning/projects/submitted', {
+    method: 'GET',
+  });
+  const json = await parseJson(response);
+  return (Array.isArray(json.data) ? json.data : []) as SubmittedProject[];
+};
+
+export const submitProject = async (payload: {
+  moduleId: string;
+  topic: string;
+  title: string;
+  summary: string;
+  repositoryUrl?: string;
+  liveUrl?: string;
+  techStack: string[];
+}) => {
+  const response = await authFetch('/learning/projects/submit', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  const json = await parseJson(response);
+  return json.data as SubmittedProject;
 };
 
 export const submitLearningFeedbackAndReplan = async (payload: {

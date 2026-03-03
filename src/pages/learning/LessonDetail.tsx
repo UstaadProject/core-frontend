@@ -15,10 +15,12 @@ import {
 import { cn } from '@/lib/utils';
 import { LearningLayout } from '@/components/layout/LearningLayout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AIAssistant } from '@/components/learning/AIAssistant';
 import {
   getTopicContent,
   completeTopic,
+  submitProject,
   type TopicContent,
 } from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
@@ -233,7 +235,13 @@ export default function LessonDetail() {
 
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [submittingProject, setSubmittingProject] = useState(false);
   const [content, setContent] = useState<TopicContent | null>(null);
+  const [projectTitle, setProjectTitle] = useState('');
+  const [projectSummary, setProjectSummary] = useState('');
+  const [repositoryUrl, setRepositoryUrl] = useState('');
+  const [liveUrl, setLiveUrl] = useState('');
+  const [techStack, setTechStack] = useState('');
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -262,6 +270,16 @@ export default function LessonDetail() {
     fetchContent();
   }, [moduleId, topic, toast]);
 
+  useEffect(() => {
+    if (!content) return;
+    if (!projectTitle.trim()) {
+      setProjectTitle(`${content.topic} Project`);
+    }
+    if (!projectSummary.trim() && content.mini_project) {
+      setProjectSummary(content.mini_project);
+    }
+  }, [content, projectTitle, projectSummary]);
+
   const handleComplete = async () => {
     if (!moduleId || !topic) return;
 
@@ -282,6 +300,47 @@ export default function LessonDetail() {
       });
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const handleSubmitProject = async () => {
+    if (!moduleId || !topic) return;
+    if (!projectTitle.trim()) {
+      toast({
+        title: 'Project title is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSubmittingProject(true);
+      await submitProject({
+        moduleId,
+        topic,
+        title: projectTitle.trim(),
+        summary: projectSummary.trim(),
+        repositoryUrl: repositoryUrl.trim(),
+        liveUrl: liveUrl.trim(),
+        techStack: techStack
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean),
+      });
+
+      toast({
+        title: 'Project submitted',
+        description: 'This project will now be used in Resume Builder.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to submit project',
+        description:
+          error instanceof Error ? error.message : 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmittingProject(false);
     }
   };
 
@@ -468,9 +527,56 @@ export default function LessonDetail() {
             {/* Mini Project */}
             {content.mini_project && (
               <ContentSection title='Mini Project' icon={Folder}>
-                <div className='p-4 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-lg'>
+                <div className='p-4 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-lg space-y-4'>
                   <div className='text-[hsl(var(--foreground))]'>
                     <RichTextContent content={content.mini_project} />
+                  </div>
+
+                  <div className='rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.45)] p-4 space-y-3'>
+                    <p className='text-sm font-medium text-[hsl(var(--foreground))]'>
+                      Submit this project for Resume Builder
+                    </p>
+                    <Input
+                      value={projectTitle}
+                      onChange={(e) => setProjectTitle(e.target.value)}
+                      placeholder='Project title'
+                    />
+                    <textarea
+                      value={projectSummary}
+                      onChange={(e) => setProjectSummary(e.target.value)}
+                      rows={4}
+                      placeholder='What did you build and what impact did it have?'
+                      className='w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]'
+                    />
+                    <Input
+                      value={repositoryUrl}
+                      onChange={(e) => setRepositoryUrl(e.target.value)}
+                      placeholder='Repository URL (optional)'
+                    />
+                    <Input
+                      value={liveUrl}
+                      onChange={(e) => setLiveUrl(e.target.value)}
+                      placeholder='Live URL (optional)'
+                    />
+                    <Input
+                      value={techStack}
+                      onChange={(e) => setTechStack(e.target.value)}
+                      placeholder='Tech stack (comma separated)'
+                    />
+                    <Button
+                      onClick={handleSubmitProject}
+                      variant='outline'
+                      disabled={submittingProject}
+                    >
+                      {submittingProject ? (
+                        <>
+                          <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Project'
+                      )}
+                    </Button>
                   </div>
                 </div>
               </ContentSection>
