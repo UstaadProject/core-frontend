@@ -311,10 +311,13 @@ export const completeTopic = async (
 };
 
 // Ask AI tutor
-export const askTutor = async (question: string): Promise<TutorMessage> => {
+export const askTutor = async (
+  question: string,
+  context?: { moduleId?: string; topic?: string }
+): Promise<TutorMessage> => {
   const response = await authFetch('/learning/ask-tutor', {
     method: 'POST',
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, ...context }),
   });
   const json = await parseJson(response);
   return json.data;

@@ -638,7 +638,11 @@ export default function LessonDetail() {
 
         <div className='hidden lg:block h-full min-h-0'>
           <div className='sticky top-4 h-[calc(100vh-2rem)] min-h-0 overflow-hidden rounded-xl border border-[hsl(var(--border))]'>
-            <AIAssistant lessonTitle={content.topic} />
+            <AIAssistant
+              lessonTitle={content.topic}
+              moduleId={moduleId}
+              topic={topic}
+            />
           </div>
         </div>
       </div>

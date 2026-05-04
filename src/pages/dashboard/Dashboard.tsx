@@ -136,29 +136,27 @@ export default function Index() {
         </div>
 
         {/* Stats Grid */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8'>
           {statsDisplay.map((stat, i) => (
             <div
               key={stat.label}
-              className='bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-5 animate-fade-in'
-              style={{ animationDelay: `${i * 0.1}s` }}
+              className='ui-surface-card p-6 rounded-2xl hover:shadow-lg transition-all duration-300 group animate-slide-up'
+              style={{ animationDelay: `${i * 0.08}s` }}
             >
-              <div className='flex items-start justify-between'>
-                <div>
-                  <p className='text-sm text-[hsl(var(--muted-foreground))]'>
-                    {stat.label}
-                  </p>
-                  <p className='text-3xl font-bold text-[hsl(var(--foreground))] mt-1'>
-                    {stat.value}
-                  </p>
-                  <p className='text-sm text-[hsl(var(--muted-foreground))] mt-1'>
-                    {stat.sub}
-                  </p>
-                </div>
-                <div className='w-10 h-10 rounded-xl bg-[hsl(var(--primary)/0.1)] flex items-center justify-center'>
-                  <stat.icon className='w-5 h-5 text-[hsl(var(--primary))]' />
+              <div className='flex items-start justify-between mb-3'>
+                <div className='p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 group-hover:scale-110 transition-transform'>
+                  <stat.icon className='w-5 h-5 text-primary' />
                 </div>
               </div>
+              <p className='text-xs text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide mb-1'>
+                {stat.label}
+              </p>
+              <p className='text-3xl font-bold text-[hsl(var(--foreground))] font-poppins'>
+                {stat.value}
+              </p>
+              <p className='text-xs text-[hsl(var(--muted-foreground))] mt-2'>
+                {stat.sub}
+              </p>
             </div>
           ))}
         </div>
@@ -166,19 +164,19 @@ export default function Index() {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
           {/* Learning Path Card */}
           <div
-            className='lg:col-span-2 bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 animate-fade-in'
-            style={{ animationDelay: '0.4s' }}
+            className='lg:col-span-2 ui-surface-card p-6 rounded-2xl animate-slide-up'
+            style={{ animationDelay: '0.3s' }}
           >
             <div className='flex items-center justify-between mb-6'>
               <div>
-                <h2 className='text-xl font-semibold text-[hsl(var(--foreground))]'>
+                <h2 className='text-xl font-bold text-[hsl(var(--foreground))] font-poppins'>
                   Learning Path
                 </h2>
-                <p className='text-sm text-[hsl(var(--muted-foreground))] mt-0.5'>
+                <p className='text-sm text-[hsl(var(--muted-foreground))] mt-1'>
                   Your personalized {learningPath.level} journey
                 </p>
               </div>
-              <span className='px-3 py-1 text-sm rounded-full bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]'>
+              <span className='px-3.5 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30'>
                 {learningPath.completedModules} of {learningPath.totalModules}{' '}
                 modules
               </span>
@@ -192,10 +190,12 @@ export default function Index() {
                 return (
                   <div
                     key={module.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
+                    className={`flex items-center gap-4 p-4 rounded-xl transition-all border ${
                       status === 'in-progress'
-                        ? 'bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--primary)/0.3)]'
-                        : 'hover:bg-[hsl(var(--muted)/0.3)]'
+                        ? 'bg-gradient-to-r from-primary/15 to-primary/5 border-primary/40 hover:border-primary/60'
+                        : status === 'completed'
+                          ? 'bg-success/10 border-success/30'
+                          : 'bg-muted/20 border-muted/40 opacity-60'
                     }`}
                   >
                     {/* Status Icon */}

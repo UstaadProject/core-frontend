@@ -4,6 +4,7 @@ import Signup from './pages/auth/Signup';
 import Onboarding from './pages/auth/Onboarding';
 import NotFound from './pages/NotFound';
 import Dashboard from './pages/dashboard/Dashboard';
+import Analytics from './pages/dashboard/Analytics';
 import Leaderboard from './pages/dashboard/Leaderboard';
 import ResumeBuilder from './pages/dashboard/ResumeBuilder';
 import Achievements from './pages/dashboard/Achievements';
@@ -56,6 +57,14 @@ export const routes: AppRoute[] = [
     element: (
       <ProtectedRoute>
         <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/analytics',
+    element: (
+      <ProtectedRoute>
+        <Analytics />
       </ProtectedRoute>
     ),
   },

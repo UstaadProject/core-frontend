@@ -125,6 +125,8 @@ function MessageContent({ content }: { content: string }) {
 
 interface AIAssistantProps {
   lessonTitle?: string;
+  moduleId?: string;
+  topic?: string;
   onClose?: () => void;
 }
 
@@ -135,7 +137,12 @@ const quickPrompts = [
   'Summarize the lesson',
 ];
 
-export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
+export function AIAssistant({
+  lessonTitle,
+  moduleId,
+  topic,
+  onClose,
+}: AIAssistantProps) {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -157,7 +164,7 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
     setIsLoading(true);
 
     try {
-      const response = await askTutor(userMessage);
+      const response = await askTutor(userMessage, { moduleId, topic });
       setMessages((prev) => [
         ...prev,
         {
@@ -174,13 +181,12 @@ export function AIAssistant({ lessonTitle, onClose }: AIAssistantProps) {
         {
           role: 'ai',
           content:
-            "I'm having trouble connecting right now. Please make sure you're viewing a lesson topic first, then I can help you better!",
+            "I'm having trouble connecting right now. Please try again in a moment.",
         },
       ]);
       toast({
         title: 'Connection issue',
-        description:
-          'Make sure you have selected a lesson topic to get AI assistance.',
+        description: 'Could not reach Shagird right now. Please try again.',
         variant: 'destructive',
       });
     } finally {
