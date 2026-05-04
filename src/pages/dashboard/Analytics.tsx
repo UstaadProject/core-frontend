@@ -10,9 +10,7 @@ import {
   TrendingUp,
   AlertCircle,
   Brain,
-  Target,
   Zap,
-  BookOpen,
 } from 'lucide-react';
 import { PerformanceOverview } from '@/components/analytics/PerformanceOverview';
 import { WeakAreasSection } from '@/components/analytics/WeakAreasSection';
