@@ -10,6 +10,7 @@ import ResumeBuilder from './pages/dashboard/ResumeBuilder';
 import Achievements from './pages/dashboard/Achievements';
 import Profile from './pages/dashboard/Profile';
 import Settings from './pages/dashboard/Settings';
+import MockClient from './pages/dashboard/MockClient';
 import LearningPath from './pages/learning/LearningPath';
 import LessonDetail from './pages/learning/LessonDetail';
 import type { JSX } from 'react';
@@ -81,6 +82,14 @@ export const routes: AppRoute[] = [
     element: (
       <ProtectedRoute>
         <Achievements />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/mock-client',
+    element: (
+      <ProtectedRoute>
+        <MockClient />
       </ProtectedRoute>
     ),
   },

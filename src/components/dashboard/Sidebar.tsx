@@ -10,12 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   BarChart3,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOutUser } from '@/services/firebase/firebase';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Mock Client', url: '/mock-client', icon: MessageSquare },
   { title: 'Learning Path', url: '/learning-path', icon: GraduationCap },
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'Leaderboard', url: '/leaderboard', icon: Trophy },
@@ -49,7 +51,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className='flex items-center gap-3 p-5 border-b border-[hsl(var(--border-muted))]'>
-        <div className='w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-accent to-secondary flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-base shadow-lg shadow-primary/20'>
+        <div className='w-10 h-10 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-base shadow-lg shadow-primary/20'>
           U
         </div>
         {!collapsed && (
@@ -80,7 +82,7 @@ export function Sidebar() {
             className={cn(
               'flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative',
               isActive(item.url)
-                ? 'bg-gradient-to-r from-primary/20 to-primary/10 text-[hsl(var(--primary))] shadow-lg shadow-primary/10'
+                ? 'bg-primary/10 text-[hsl(var(--primary))] shadow-lg shadow-primary/10'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.6)]'
             )}
           >
@@ -111,7 +113,7 @@ export function Sidebar() {
             className={cn(
               'flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group',
               isActive(item.url)
-                ? 'bg-gradient-to-r from-primary/20 to-primary/10 text-[hsl(var(--primary))]'
+                ? 'bg-primary/10 text-[hsl(var(--primary))]'
                 : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.6)]'
             )}
           >
