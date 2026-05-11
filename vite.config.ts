@@ -14,7 +14,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target:
+          'https://wpl3zc6bcpsz4goscnvcz62ipm0pwsxf.lambda-url.us-east-1.on.aws',
         changeOrigin: true,
       },
     },
