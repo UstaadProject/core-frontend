@@ -2,7 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, MailCheck } from 'lucide-react';
+import {
+  Loader2,
+  MailCheck,
+  User,
+  MapPin,
+  FileText,
+  Globe,
+  Github,
+  Linkedin,
+  Shield,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 import {
   getCurrentUser,
   updateCurrentUserProfile,
@@ -14,6 +26,18 @@ import {
   changeCurrentUserEmail,
 } from '@/services/firebase/firebase';
 import { useToast } from '@/hooks/use-toast';
+
+function ProfileSkeleton() {
+  return (
+    <DashboardLayout>
+      <div className='p-8 max-w-4xl mx-auto space-y-6'>
+        <div className='skeleton skeleton-card h-48' />
+        <div className='skeleton skeleton-card h-72' />
+        <div className='skeleton skeleton-card h-64' />
+      </div>
+    </DashboardLayout>
+  );
+}
 
 export default function Profile() {
   const { toast } = useToast();
@@ -136,130 +160,192 @@ export default function Profile() {
     }
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <Loader2 className='w-8 h-8 animate-spin text-[hsl(var(--primary))]' />
-        </div>
-      </DashboardLayout>
-    );
-  }
+  if (loading) return <ProfileSkeleton />;
+
+  const initials = (form.name || user?.email || 'U').charAt(0).toUpperCase();
+  const isVerified = auth.currentUser?.emailVerified;
+
+  const formFields = [
+    { key: 'name', label: 'Full Name', icon: User, placeholder: 'Your full name', colSpan: false },
+    { key: 'location', label: 'Location', icon: MapPin, placeholder: 'City, Country', colSpan: false },
+    { key: 'bio', label: 'Bio', icon: FileText, placeholder: 'A short bio about yourself', colSpan: true },
+    { key: 'website', label: 'Website', icon: Globe, placeholder: 'https://your-site.com', colSpan: false },
+    { key: 'github', label: 'GitHub', icon: Github, placeholder: 'github.com/username', colSpan: false },
+    { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'linkedin.com/in/username', colSpan: true },
+  ] as const;
 
   return (
     <DashboardLayout>
-      <div className='ui-page-shell space-y-6'>
-        <div className='ui-page-header'>
-          <h1 className='ui-page-title'>Profile</h1>
-          <p className='ui-page-subtitle'>
-            Manage your personal details and account identity.
-          </p>
+      <div className='max-w-4xl mx-auto'>
+        {/* Page Banner with avatar */}
+        <div className='page-banner mb-0'>
+          <div className='flex items-center gap-6'>
+            {/* Avatar */}
+            <div className='avatar-ring shrink-0'>
+              <div
+                className='w-20 h-20 rounded-full flex items-center justify-center text-3xl font-extrabold text-white'
+                style={{
+                  background:
+                    'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+                }}
+              >
+                {initials}
+              </div>
+            </div>
+
+            {/* Name + verification */}
+            <div className='flex-1'>
+              <h1 className='text-2xl font-extrabold font-display text-[hsl(var(--foreground))]'>
+                {form.name || 'Your Profile'}
+              </h1>
+              <p className='text-[hsl(var(--muted-foreground))] text-sm mt-0.5'>
+                {user?.email}
+              </p>
+              <div className='mt-2'>
+                {isVerified ? (
+                  <span className='pill pill-success text-[11px] flex items-center gap-1 w-fit'>
+                    <CheckCircle2 className='w-3 h-3' /> Email verified
+                  </span>
+                ) : (
+                  <span className='pill pill-warning text-[11px] flex items-center gap-1 w-fit'>
+                    <AlertCircle className='w-3 h-3' /> Email not verified
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className='ui-surface-card p-6 space-y-4'>
-          <h2 className='ui-section-title'>Personal Information</h2>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <label>
-              <span className='ui-field-label'>Full name</span>
-              <Input
-                value={form.name}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, name: e.target.value }))
-                }
-                placeholder='Full name'
-              />
-            </label>
-            <label>
-              <span className='ui-field-label'>Location</span>
-              <Input
-                value={form.location}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, location: e.target.value }))
-                }
-                placeholder='Location'
-              />
-            </label>
-            <label className='md:col-span-2'>
-              <span className='ui-field-label'>Bio</span>
-              <Input
-                value={form.bio}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, bio: e.target.value }))
-                }
-                placeholder='Short bio'
-              />
-            </label>
-            <label>
-              <span className='ui-field-label'>Website</span>
-              <Input
-                value={form.website}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, website: e.target.value }))
-                }
-                placeholder='https://your-site.com'
-              />
-            </label>
-            <label>
-              <span className='ui-field-label'>GitHub</span>
-              <Input
-                value={form.github}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, github: e.target.value }))
-                }
-                placeholder='github.com/username'
-              />
-            </label>
-            <label className='md:col-span-2'>
-              <span className='ui-field-label'>LinkedIn</span>
-              <Input
-                value={form.linkedin}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, linkedin: e.target.value }))
-                }
-                placeholder='linkedin.com/in/username'
-              />
-            </label>
-          </div>
-          <Button onClick={handleSaveProfile} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Profile'}
-          </Button>
-        </div>
+        <div className='p-8 space-y-6'>
+          {/* Personal Information */}
+          <div className='ui-surface-card p-6 space-y-5 rounded-2xl'>
+            <div className='section-header'>
+              <div className='section-header-icon icon-bubble icon-bubble-primary'>
+                <User className='w-4 h-4 text-[hsl(var(--primary))]' />
+              </div>
+              <div>
+                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Personal Information</h2>
+                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>Manage your personal details</p>
+              </div>
+            </div>
 
-        <div className='ui-surface-card p-6 space-y-4'>
-          <h2 className='ui-section-title'>Email & Verification</h2>
-          <div className='text-sm text-[hsl(var(--muted-foreground))]'>
-            Current email: {user?.email}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              {formFields.map(({ key, label, icon: Icon, placeholder, colSpan }) => (
+                <label key={key} className={colSpan ? 'md:col-span-2' : ''}>
+                  <div className='flex items-center gap-1.5 mb-1.5'>
+                    <Icon className='w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]' />
+                    <span className='ui-field-label'>{label}</span>
+                  </div>
+                  <Input
+                    value={form[key]}
+                    onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className='pt-2'>
+              <Button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+                  boxShadow: '0 0 16px hsl(var(--primary) / 0.3)',
+                  color: 'white',
+                }}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Profile'
+                )}
+              </Button>
+            </div>
           </div>
-          <div className='text-sm'>
-            {auth.currentUser?.emailVerified ? (
-              <span className='ui-chip text-[hsl(var(--success))]'>
-                Email verified
-              </span>
-            ) : (
-              <span className='ui-chip text-[hsl(var(--destructive))]'>
-                Email not verified
-              </span>
+
+          {/* Email & Verification */}
+          <div className='ui-surface-card p-6 space-y-4 rounded-2xl'>
+            <div className='section-header'>
+              <div className='section-header-icon icon-bubble icon-bubble-accent'>
+                <MailCheck className='w-4 h-4 text-[hsl(var(--accent))]' />
+              </div>
+              <div>
+                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Email & Verification</h2>
+                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>
+                  Current: <span className='text-[hsl(var(--foreground))]'>{user?.email}</span>
+                </p>
+              </div>
+            </div>
+
+            {!isVerified && (
+              <div
+                className='rounded-xl px-4 py-3 border text-sm'
+                style={{
+                  background: 'hsl(var(--warning)/0.08)',
+                  borderColor: 'hsl(var(--warning)/0.4)',
+                  color: 'hsl(var(--warning))',
+                }}
+              >
+                Your email is not verified. Please verify it to access all features.
+              </div>
             )}
-          </div>
-          <Button variant='outline' onClick={handleVerifyEmail}>
-            <MailCheck className='w-4 h-4 mr-2' />
-            Send verification email
-          </Button>
 
-          <Input
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            placeholder='New email'
-          />
-          <Input
-            type='password'
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder='Current password (required to change email)'
-          />
-          <Button onClick={handleChangeEmail} disabled={emailChanging}>
-            {emailChanging ? 'Updating...' : 'Change Email'}
-          </Button>
+            <Button variant='outline' onClick={handleVerifyEmail} className='flex items-center gap-2'>
+              <MailCheck className='w-4 h-4' />
+              Send verification email
+            </Button>
+
+            <div className='border-t border-[hsl(var(--border))] pt-4 space-y-3'>
+              <p className='text-sm font-semibold text-[hsl(var(--foreground))]'>Change Email</p>
+              <Input
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder='New email address'
+              />
+              <Input
+                type='password'
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder='Current password (required)'
+              />
+              <Button
+                onClick={handleChangeEmail}
+                disabled={emailChanging}
+                variant='outline'
+              >
+                {emailChanging ? (
+                  <>
+                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                    Updating...
+                  </>
+                ) : (
+                  'Change Email'
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Security placeholder */}
+          <div className='ui-surface-card p-6 rounded-2xl'>
+            <div className='section-header'>
+              <div className='section-header-icon icon-bubble' style={{ background: 'hsl(var(--success)/0.15)' }}>
+                <Shield className='w-4 h-4 text-[hsl(var(--success))]' />
+              </div>
+              <div>
+                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Account Security</h2>
+                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>
+                  Change password and manage access
+                </p>
+              </div>
+            </div>
+            <p className='text-sm text-[hsl(var(--muted-foreground))]'>
+              Visit <span className='text-[hsl(var(--primary))]'>Settings → Security</span> to update your password.
+            </p>
+          </div>
         </div>
       </div>
     </DashboardLayout>

@@ -9,11 +9,10 @@ import {
   ArrowRight,
   Check,
   X,
+  Sparkles,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
-import { Logo } from '@/components/layout/Logo';
 import { SocialButton } from '@/components/layout/SocialButton';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -21,6 +20,19 @@ import {
   signUpWithEmail,
 } from '@/services/firebase/firebase';
 import { registerUser } from '@/services/api/userApi';
+
+const passwordReqs = [
+  { label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+  { label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+  { label: 'One lowercase letter', test: (p: string) => /[a-z]/.test(p) },
+  { label: 'One number', test: (p: string) => /\d/.test(p) },
+];
+
+function getStrength(password: string) {
+  if (!password) return 0;
+  const met = passwordReqs.filter((r) => r.test(password)).length;
+  return met;
+}
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -31,18 +43,12 @@ const Signup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const passwordRequirements = [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
-    { label: 'One lowercase letter', met: /[a-z]/.test(password) },
-    { label: 'One number', met: /\d/.test(password) },
-  ];
-
-  const allRequirementsMet = passwordRequirements.every((req) => req.met);
+  const strength = getStrength(password);
+  const allMet = strength === 4;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!allRequirementsMet) {
+    if (!allMet) {
       toast({
         title: 'Weak password',
         description: 'Please meet all password requirements.',
@@ -72,20 +78,32 @@ const Signup = () => {
     }
   };
 
+  const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  const strengthColors = ['', '#ef4444', '#f59e0b', '#f97316', '#22c55e'];
+
   return (
     <AuthLayout>
-      <div className='glass-card rounded-2xl p-8 animate-scale-in'>
+      <div className='gradient-border-card p-8 animate-scale-in backdrop-blur-sm'>
         {/* Logo */}
-        <div className='flex justify-center mb-8'>
-          <Logo />
+        <div className='flex flex-col items-center mb-8 gap-3'>
+          <div
+            className='w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg'
+            style={{
+              background: 'linear-gradient(135deg, hsl(320 100% 58%), hsl(280 100% 65%))',
+              boxShadow: '0 0 30px hsl(320 100% 58% / 0.4)',
+            }}
+          >
+            <Sparkles className='w-7 h-7 text-white' />
+          </div>
+          <span className='logo-shimmer font-extrabold text-2xl tracking-tight'>Ustaad</span>
         </div>
 
         {/* Header */}
         <div className='text-center mb-8 animate-slide-up opacity-0 delay-100'>
-          <h1 className='text-2xl font-bold text-foreground mb-2'>
+          <h1 className='text-2xl font-extrabold font-display text-[hsl(var(--foreground))] mb-1.5'>
             Create your account
           </h1>
-          <p className='text-muted-foreground'>
+          <p className='text-[hsl(var(--muted-foreground))] text-sm'>
             Start your freelancing journey today
           </p>
         </div>
@@ -95,22 +113,10 @@ const Signup = () => {
           <SocialButton
             icon={
               <svg className='w-5 h-5' viewBox='0 0 24 24'>
-                <path
-                  fill='currentColor'
-                  d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'
-                />
-                <path
-                  fill='currentColor'
-                  d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'
-                />
-                <path
-                  fill='currentColor'
-                  d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'
-                />
-                <path
-                  fill='currentColor'
-                  d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'
-                />
+                <path fill='currentColor' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z' />
+                <path fill='currentColor' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z' />
+                <path fill='currentColor' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z' />
+                <path fill='currentColor' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z' />
               </svg>
             }
             label='Continue with Google'
@@ -128,22 +134,19 @@ const Signup = () => {
         {/* Divider */}
         <div className='relative mb-6 animate-slide-up opacity-0 delay-300'>
           <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-border' />
+            <div className='w-full border-t border-[hsl(var(--border))]' />
           </div>
-          <div className='relative flex justify-center text-sm'>
-            <span className='px-4 bg-card text-muted-foreground'>
+          <div className='relative flex justify-center text-xs'>
+            <span className='px-4 text-[hsl(var(--muted-foreground))]' style={{ background: 'hsl(var(--card))' }}>
               or continue with email
             </span>
           </div>
         </div>
 
         {/* Signup Form */}
-        <form
-          onSubmit={handleSubmit}
-          className='space-y-4 animate-slide-up opacity-0 delay-400'
-        >
+        <form onSubmit={handleSubmit} className='space-y-4 animate-slide-up opacity-0 delay-400'>
           <div className='relative'>
-            <User className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground' />
+            <User className='absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]' />
             <Input
               type='text'
               placeholder='Full name'
@@ -155,7 +158,7 @@ const Signup = () => {
           </div>
 
           <div className='relative'>
-            <Mail className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground' />
+            <Mail className='absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]' />
             <Input
               type='email'
               placeholder='Email address'
@@ -167,7 +170,7 @@ const Signup = () => {
           </div>
 
           <div className='relative'>
-            <Lock className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground' />
+            <Lock className='absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]' />
             <Input
               type={showPassword ? 'text' : 'password'}
               placeholder='Password'
@@ -179,74 +182,90 @@ const Signup = () => {
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors'
+              className='absolute right-3.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors'
             >
-              {showPassword ? (
-                <EyeOff className='w-5 h-5' />
-              ) : (
-                <Eye className='w-5 h-5' />
-              )}
+              {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
             </button>
           </div>
 
-          {/* Password requirements */}
+          {/* Password strength */}
           {password.length > 0 && (
-            <div className='space-y-2 p-3 rounded-lg bg-muted/30 animate-fade-in'>
-              {passwordRequirements.map((req, index) => (
-                <div key={index} className='flex items-center gap-2 text-sm'>
-                  {req.met ? (
-                    <Check className='w-4 h-4 text-success' />
-                  ) : (
-                    <X className='w-4 h-4 text-muted-foreground' />
-                  )}
-                  <span
-                    className={
-                      req.met ? 'text-success' : 'text-muted-foreground'
-                    }
-                  >
-                    {req.label}
-                  </span>
+            <div className='space-y-2.5 p-3.5 rounded-xl animate-fade-in' style={{ background: 'hsl(var(--muted)/0.3)', border: '1px solid hsl(var(--border)/0.5)' }}>
+              {/* Strength bar */}
+              <div className='flex items-center gap-2'>
+                <div className='flex-1 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
+                  <div
+                    className='h-full rounded-full transition-all duration-500'
+                    style={{
+                      width: `${(strength / 4) * 100}%`,
+                      background: strengthColors[strength] || '#ef4444',
+                    }}
+                  />
                 </div>
-              ))}
+                <span className='text-[11px] font-semibold w-10 text-right' style={{ color: strengthColors[strength] || '#ef4444' }}>
+                  {strengthLabels[strength]}
+                </span>
+              </div>
+              {/* Requirements list */}
+              <div className='grid grid-cols-2 gap-1'>
+                {passwordReqs.map((req) => {
+                  const met = req.test(password);
+                  return (
+                    <div key={req.label} className='flex items-center gap-1.5 text-[11px]'>
+                      {met ? (
+                        <Check className='w-3 h-3 text-[hsl(var(--success))]' />
+                      ) : (
+                        <X className='w-3 h-3 text-[hsl(var(--muted-foreground))]' />
+                      )}
+                      <span className={met ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--muted-foreground))]'}>
+                        {req.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          <Button
+          <button
             type='submit'
-            variant='gradient'
-            size='lg'
-            className='w-full'
-            disabled={isLoading || !allRequirementsMet}
+            disabled={isLoading || !allMet}
+            className='w-full h-11 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 group hover:gap-3 disabled:opacity-60'
+            style={{
+              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+              boxShadow: '0 0 24px hsl(var(--primary) / 0.4)',
+              color: 'white',
+            }}
           >
             {isLoading ? (
-              <div className='w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin' />
+              <div className='w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin' />
             ) : (
               <>
                 Create account
-                <ArrowRight className='w-5 h-5' />
+                <ArrowRight className='w-4 h-4 group-hover:translate-x-1 transition-transform' />
               </>
             )}
-          </Button>
+          </button>
         </form>
 
         {/* Terms */}
-        <p className='text-center mt-4 text-xs text-muted-foreground animate-slide-up opacity-0 delay-500'>
+        <p className='text-center mt-4 text-[10px] text-[hsl(var(--muted-foreground))] animate-slide-up opacity-0 delay-500'>
           By signing up, you agree to our{' '}
-          <Link to='/terms' className='text-primary hover:underline'>
+          <Link to='/terms' className='text-[hsl(var(--primary))] hover:underline'>
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link to='/privacy' className='text-primary hover:underline'>
+          <Link to='/privacy' className='text-[hsl(var(--primary))] hover:underline'>
             Privacy Policy
           </Link>
         </p>
 
         {/* Sign in link */}
-        <p className='text-center mt-4 text-muted-foreground animate-slide-up opacity-0 delay-500'>
+        <p className='text-center mt-4 text-[hsl(var(--muted-foreground))] text-sm animate-slide-up opacity-0 delay-500'>
           Already have an account?{' '}
           <Link
             to='/login'
-            className='text-primary hover:text-primary-glow transition-colors font-medium'
+            className='text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-glow))] transition-colors font-semibold'
           >
             Sign in
           </Link>

@@ -11,18 +11,20 @@ import {
   ChevronRight,
   BarChart3,
   MessageSquare,
+  FileText,
+  Medal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOutUser } from '@/services/firebase/firebase';
 
 const mainNavItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Mock Client', url: '/mock-client', icon: MessageSquare },
-  { title: 'Learning Path', url: '/learning-path', icon: GraduationCap },
-  { title: 'Analytics', url: '/analytics', icon: BarChart3 },
-  { title: 'Leaderboard', url: '/leaderboard', icon: Trophy },
-  { title: 'Resume Builder', url: '/resume-builder', icon: User },
-  { title: 'Achievements', url: '/achievements', icon: Trophy },
+  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, color: 'text-primary' },
+  { title: 'Mock Client', url: '/mock-client', icon: MessageSquare, color: 'text-accent' },
+  { title: 'Learning Path', url: '/learning-path', icon: GraduationCap, color: 'text-secondary' },
+  { title: 'Analytics', url: '/analytics', icon: BarChart3, color: 'text-primary' },
+  { title: 'Leaderboard', url: '/leaderboard', icon: Medal, color: 'text-yellow-400' },
+  { title: 'Resume Builder', url: '/resume-builder', icon: FileText, color: 'text-accent' },
+  { title: 'Achievements', url: '/achievements', icon: Trophy, color: 'text-secondary' },
 ];
 
 const bottomNavItems = [
@@ -45,26 +47,50 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative flex flex-col h-screen bg-[hsl(var(--sidebar-background))] border-r border-[hsl(var(--sidebar-border))] transition-all duration-300 ease-out',
-        collapsed ? 'w-16' : 'w-64'
+        'relative flex flex-col h-screen border-r border-[hsl(var(--sidebar-border))] transition-all duration-300 ease-out',
+        collapsed ? 'w-[68px]' : 'w-[240px]'
       )}
+      style={{
+        background: 'linear-gradient(180deg, hsl(240 10% 5%) 0%, hsl(240 8% 4%) 100%)',
+      }}
     >
+      {/* Ambient glow */}
+      <div
+        className='pointer-events-none absolute inset-0 opacity-30'
+        style={{
+          background:
+            'radial-gradient(ellipse 120% 40% at 50% 0%, hsl(320 100% 58% / 0.12) 0%, transparent 70%)',
+        }}
+      />
+
       {/* Logo */}
-      <div className='flex items-center gap-3 p-5 border-b border-[hsl(var(--border-muted))]'>
-        <div className='w-10 h-10 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-base shadow-lg shadow-primary/20'>
-          U
+      <div
+        className={cn(
+          'flex items-center gap-3 border-b border-[hsl(var(--border-muted))] relative z-10',
+          collapsed ? 'p-4 justify-center' : 'p-5'
+        )}
+      >
+        <div className='relative shrink-0'>
+          <div
+            className='w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-base shadow-lg'
+            style={{
+              background: 'linear-gradient(135deg, hsl(320 100% 58%), hsl(280 100% 65%))',
+              boxShadow: '0 0 20px hsl(320 100% 58% / 0.4)',
+            }}
+          >
+            U
+          </div>
         </div>
         {!collapsed && (
-          <span className='font-bold text-lg text-[hsl(var(--foreground))] tracking-tight'>
-            Ustaad
-          </span>
+          <span className='logo-shimmer font-bold text-lg tracking-tight'>Ustaad</span>
         )}
       </div>
 
       {/* Collapse Toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className='absolute -right-3 top-20 w-6 h-6 rounded-full bg-[hsl(var(--surface-elevated))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-all z-10 shadow-md'
+        className='absolute -right-3 top-[72px] w-6 h-6 rounded-full border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all z-20 shadow-md'
+        style={{ background: 'hsl(240 8% 10%)' }}
       >
         {collapsed ? (
           <ChevronRight className='w-3 h-3' />
@@ -74,61 +100,74 @@ export function Sidebar() {
       </button>
 
       {/* Main Navigation */}
-      <nav className='flex-1 p-3 space-y-1.5 overflow-y-auto'>
-        {mainNavItems.map((item) => (
-          <NavLink
-            key={item.title}
-            to={item.url}
-            className={cn(
-              'flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative',
-              isActive(item.url)
-                ? 'bg-primary/10 text-[hsl(var(--primary))] shadow-lg shadow-primary/10'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.6)]'
-            )}
-          >
-            <item.icon
+      <nav className='flex-1 p-2.5 space-y-0.5 overflow-y-auto relative z-10 mt-1'>
+        {mainNavItems.map((item) => {
+          const active = isActive(item.url);
+          return (
+            <NavLink
+              key={item.title}
+              to={item.url}
+              title={collapsed ? item.title : undefined}
               className={cn(
-                'w-5 h-5 shrink-0 transition-all',
-                isActive(item.url)
-                  ? 'text-[hsl(var(--primary))]'
-                  : 'text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]'
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative',
+                active
+                  ? 'nav-item-active'
+                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]'
               )}
-            />
-            {!collapsed && (
-              <span className='font-semibold text-sm'>{item.title}</span>
-            )}
-            {isActive(item.url) && !collapsed && (
-              <div className='ml-auto w-2 h-2 rounded-full bg-[hsl(var(--primary))] shadow-lg shadow-primary/40' />
-            )}
-          </NavLink>
-        ))}
+            >
+              <item.icon
+                className={cn(
+                  'w-[18px] h-[18px] shrink-0 transition-all',
+                  active ? item.color : 'text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]'
+                )}
+              />
+              {!collapsed && (
+                <span className='font-medium text-[13px]'>{item.title}</span>
+              )}
+              {active && !collapsed && (
+                <div
+                  className='ml-auto w-1.5 h-1.5 rounded-full'
+                  style={{
+                    background: 'hsl(var(--primary))',
+                    boxShadow: '0 0 6px hsl(var(--primary) / 0.8)',
+                  }}
+                />
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
-      {/* Bottom Navigation */}
-      <div className='p-3 space-y-1.5 border-t border-[hsl(var(--border-muted))]'>
-        {bottomNavItems.map((item) => (
-          <NavLink
-            key={item.title}
-            to={item.url}
-            className={cn(
-              'flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 group',
-              isActive(item.url)
-                ? 'bg-primary/10 text-[hsl(var(--primary))]'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.6)]'
-            )}
-          >
-            <item.icon className='w-5 h-5 shrink-0' />
-            {!collapsed && (
-              <span className='font-semibold text-sm'>{item.title}</span>
-            )}
-          </NavLink>
-        ))}
+      {/* Bottom section with avatar + nav */}
+      <div className='p-2.5 border-t border-[hsl(var(--border-muted))] space-y-0.5 relative z-10'>
+        {bottomNavItems.map((item) => {
+          const active = isActive(item.url);
+          return (
+            <NavLink
+              key={item.title}
+              to={item.url}
+              title={collapsed ? item.title : undefined}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative',
+                active
+                  ? 'nav-item-active'
+                  : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]'
+              )}
+            >
+              <item.icon className='w-[18px] h-[18px] shrink-0' />
+              {!collapsed && (
+                <span className='font-medium text-[13px]'>{item.title}</span>
+              )}
+            </NavLink>
+          );
+        })}
         <button
           onClick={handleLogout}
-          className='flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 w-full text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] group'
+          title={collapsed ? 'Log Out' : undefined}
+          className='flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 w-full text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] group'
         >
-          <LogOut className='w-5 h-5 shrink-0' />
-          {!collapsed && <span className='font-semibold text-sm'>Log Out</span>}
+          <LogOut className='w-[18px] h-[18px] shrink-0' />
+          {!collapsed && <span className='font-medium text-[13px]'>Log Out</span>}
         </button>
       </div>
     </aside>

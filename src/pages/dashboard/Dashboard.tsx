@@ -8,7 +8,6 @@ import {
   Zap,
   CheckCircle2,
   ArrowRight,
-  Loader2,
 } from 'lucide-react';
 import { WelcomeHero } from '@/components/dashboard/WelcomeHero';
 import { AIAssistant } from '@/components/learning/AIAssistant';
@@ -19,13 +18,69 @@ import {
 } from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
 
+/* ---- Skeleton loading state ---- */
+function DashboardSkeleton() {
+  return (
+    <DashboardLayout>
+      <div className='p-8 max-w-7xl mx-auto space-y-6'>
+        {/* Hero skeleton */}
+        <div className='skeleton skeleton-card h-48 w-full' />
+        {/* Stats row skeleton */}
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5'>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className='skeleton skeleton-card h-32' />
+          ))}
+        </div>
+        {/* Bottom grid */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          <div className='lg:col-span-2 skeleton skeleton-card h-80' />
+          <div className='skeleton skeleton-card h-80' />
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+const statConfigs = [
+  {
+    label: 'Modules Enrolled',
+    icon: BookOpen,
+    variant: 'primary' as const,
+    iconColor: 'text-[hsl(var(--primary))]',
+    iconBg: 'icon-bubble-primary',
+    cardVariant: 'stat-card-primary',
+  },
+  {
+    label: 'Hours Learned',
+    icon: Clock,
+    variant: 'secondary' as const,
+    iconColor: 'text-[hsl(var(--secondary))]',
+    iconBg: 'icon-bubble-secondary',
+    cardVariant: 'stat-card-secondary',
+  },
+  {
+    label: 'Skills Mastered',
+    icon: Zap,
+    variant: 'accent' as const,
+    iconColor: 'text-[hsl(var(--accent))]',
+    iconBg: 'icon-bubble-accent',
+    cardVariant: 'stat-card-accent',
+  },
+  {
+    label: 'XP Earned',
+    icon: Trophy,
+    variant: 'success' as const,
+    iconColor: 'text-[hsl(var(--success))]',
+    iconBg: 'icon-bubble-success',
+    cardVariant: 'stat-card-success',
+  },
+];
+
 export default function Index() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(
-    null
-  );
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -35,8 +90,7 @@ export default function Index() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Update streak on dashboard load
-        await updateStreak().catch(() => {}); // Silent fail for streak
+        await updateStreak().catch(() => {});
         const data = await getDashboardStats();
         setDashboardData(data);
       } catch (error) {
@@ -54,26 +108,13 @@ export default function Index() {
     fetchDashboardData();
   }, [toast]);
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <div className='flex flex-col items-center gap-4'>
-            <Loader2 className='w-8 h-8 animate-spin text-[hsl(var(--primary))]' />
-            <p className='text-[hsl(var(--muted-foreground))]'>
-              Loading your dashboard...
-            </p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
 
   if (!dashboardData) {
     return (
       <DashboardLayout>
         <div className='flex items-center justify-center h-screen'>
-          <div className='flex flex-col items-center gap-4'>
+          <div className='text-center space-y-2'>
             <p className='text-[hsl(var(--muted-foreground))]'>
               Unable to load dashboard. Please refresh the page.
             </p>
@@ -87,28 +128,24 @@ export default function Index() {
 
   const statsDisplay = [
     {
-      label: 'Modules Enrolled',
+      ...statConfigs[0],
       value: stats.coursesEnrolled.toString(),
       sub: `${stats.inProgress} in progress`,
-      icon: BookOpen,
     },
     {
-      label: 'Hours Learned',
+      ...statConfigs[1],
       value: Math.round(stats.hoursLearned).toString(),
-      sub: 'Total time',
-      icon: Clock,
+      sub: 'Total time spent',
     },
     {
-      label: 'Skills Mastered',
+      ...statConfigs[2],
       value: stats.skillsMastered.toString(),
       sub: `${stats.coursesEnrolled - stats.skillsMastered} more to unlock`,
-      icon: Zap,
     },
     {
-      label: 'XP Earned',
-      value: gamification.xp.toString(),
-      sub: `${gamification.streakDays} day streak`,
-      icon: Trophy,
+      ...statConfigs[3],
+      value: gamification.xp.toLocaleString(),
+      sub: `${gamification.streakDays} day streak 🔥`,
     },
   ];
 
@@ -125,8 +162,8 @@ export default function Index() {
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-7xl h-screen mx-auto flex flex-col'>
-        {/* Header */}
+      <div className='p-8 max-w-7xl mx-auto'>
+        {/* Hero */}
         <div className='mb-8 animate-fade-in'>
           <WelcomeHero
             userName={user.name}
@@ -140,21 +177,22 @@ export default function Index() {
           {statsDisplay.map((stat, i) => (
             <div
               key={stat.label}
-              className='ui-surface-card p-6 rounded-2xl hover:shadow-lg transition-all duration-300 group animate-slide-up'
-              style={{ animationDelay: `${i * 0.08}s` }}
+              className={`stat-card ${stat.cardVariant} p-6 animate-slide-up`}
+              style={{ animationDelay: `${i * 0.07}s` }}
             >
-              <div className='flex items-start justify-between mb-3'>
-                <div className='p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 group-hover:scale-110 transition-transform'>
-                  <stat.icon className='w-5 h-5 text-primary' />
+              {/* Icon + label row */}
+              <div className='flex items-start justify-between mb-4'>
+                <div className={`icon-bubble ${stat.iconBg}`}>
+                  <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
                 </div>
               </div>
-              <p className='text-xs text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide mb-1'>
+              <p className='text-[11px] text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-widest mb-1'>
                 {stat.label}
               </p>
-              <p className='text-3xl font-bold text-[hsl(var(--foreground))] font-poppins'>
+              <p className='text-3xl font-extrabold font-display text-[hsl(var(--foreground))] animate-number-pop'>
                 {stat.value}
               </p>
-              <p className='text-xs text-[hsl(var(--muted-foreground))] mt-2'>
+              <p className='text-[12px] text-[hsl(var(--muted-foreground))] mt-2'>
                 {stat.sub}
               </p>
             </div>
@@ -169,20 +207,23 @@ export default function Index() {
           >
             <div className='flex items-center justify-between mb-6'>
               <div>
-                <h2 className='text-xl font-bold text-[hsl(var(--foreground))] font-poppins'>
+                <h2 className='text-xl font-bold font-display text-[hsl(var(--foreground))]'>
                   Learning Path
                 </h2>
-                <p className='text-sm text-[hsl(var(--muted-foreground))] mt-1'>
-                  Your personalized {learningPath.level} journey
+                <p className='text-sm text-[hsl(var(--muted-foreground))] mt-0.5'>
+                  Your personalized{' '}
+                  <span className='text-[hsl(var(--primary))] font-medium'>
+                    {learningPath.level}
+                  </span>{' '}
+                  journey
                 </p>
               </div>
-              <span className='px-3.5 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30'>
-                {learningPath.completedModules} of {learningPath.totalModules}{' '}
-                modules
+              <span className='pill pill-primary text-[11px]'>
+                {learningPath.completedModules}/{learningPath.totalModules} modules
               </span>
             </div>
 
-            <div className='space-y-3'>
+            <div className='space-y-2'>
               {learningPath.modules.map((module, i) => {
                 const status = getModuleStatus(module);
                 const progress = getModuleProgress(module);
@@ -192,28 +233,37 @@ export default function Index() {
                     key={module.id}
                     className={`flex items-center gap-4 p-4 rounded-xl transition-all border ${
                       status === 'in-progress'
-                        ? 'bg-gradient-to-r from-primary/15 to-primary/5 border-primary/40 hover:border-primary/60'
+                        ? 'bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:border-primary/50'
                         : status === 'completed'
-                          ? 'bg-success/10 border-success/30'
-                          : 'bg-muted/20 border-muted/40 opacity-60'
+                          ? 'bg-[hsl(var(--success)/0.07)] border-[hsl(var(--success)/0.25)]'
+                          : 'bg-[hsl(var(--muted)/0.15)] border-[hsl(var(--border)/0.4)] opacity-55'
                     }`}
                   >
-                    {/* Status Icon */}
-                    <div className='relative'>
+                    {/* Status icon + connector */}
+                    <div className='relative flex flex-col items-center'>
                       {status === 'completed' ? (
                         <CheckCircle2 className='w-6 h-6 text-[hsl(var(--success))]' />
                       ) : status === 'in-progress' ? (
-                        <div className='w-6 h-6 rounded-full border-2 border-[hsl(var(--primary))] flex items-center justify-center'>
-                          <div className='w-2.5 h-2.5 rounded-full bg-[hsl(var(--primary))]' />
+                        <div
+                          className='w-6 h-6 rounded-full border-2 flex items-center justify-center'
+                          style={{
+                            borderColor: 'hsl(var(--primary))',
+                            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
+                          }}
+                        >
+                          <div
+                            className='w-2.5 h-2.5 rounded-full'
+                            style={{ background: 'hsl(var(--primary))' }}
+                          />
                         </div>
                       ) : (
-                        <div className='w-6 h-6 rounded-full border-2 border-[hsl(var(--muted))] opacity-50' />
+                        <div className='w-6 h-6 rounded-full border-2 border-[hsl(var(--muted))] opacity-40' />
                       )}
                       {i < learningPath.modules.length - 1 && (
                         <div
-                          className={`absolute left-1/2 top-full w-0.5 h-6 -translate-x-1/2 ${
+                          className={`absolute left-1/2 top-full w-0.5 h-5 -translate-x-1/2 mt-0.5 ${
                             status === 'completed'
-                              ? 'bg-[hsl(var(--success))]'
+                              ? 'bg-[hsl(var(--success)/0.5)]'
                               : 'bg-[hsl(var(--border))]'
                           }`}
                         />
@@ -221,28 +271,29 @@ export default function Index() {
                     </div>
 
                     {/* Content */}
-                    <div className='flex-1'>
+                    <div className='flex-1 min-w-0'>
                       <p
-                        className={`font-medium ${
+                        className={`font-semibold text-sm truncate ${
                           status === 'locked'
-                            ? 'text-[hsl(var(--muted-foreground))] opacity-50'
+                            ? 'text-[hsl(var(--muted-foreground))]'
                             : 'text-[hsl(var(--foreground))]'
                         }`}
                       >
                         {module.title}
                       </p>
                       {status === 'in-progress' && (
-                        <div className='flex items-center gap-3 mt-2'>
-                          <span className='text-xs text-[hsl(var(--muted-foreground))]'>
-                            Progress
-                          </span>
-                          <div className='flex-1 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
+                        <div className='flex items-center gap-2 mt-2'>
+                          <div className='flex-1 h-1.5 bg-[hsl(var(--muted)/0.4)] rounded-full overflow-hidden'>
                             <div
-                              className='h-full bg-linear-to-r from-[hsl(var(--success))] to-[hsl(var(--primary))] rounded-full'
-                              style={{ width: `${progress}%` }}
+                              className='h-full rounded-full'
+                              style={{
+                                width: `${progress}%`,
+                                background:
+                                  'linear-gradient(90deg, hsl(var(--success)), hsl(var(--primary)))',
+                              }}
                             />
                           </div>
-                          <span className='text-xs text-[hsl(var(--foreground))]'>
+                          <span className='text-[11px] font-semibold text-[hsl(var(--foreground))] w-8 text-right'>
                             {progress}%
                           </span>
                         </div>
@@ -253,7 +304,13 @@ export default function Index() {
                     {status === 'in-progress' && (
                       <button
                         onClick={() => navigate('/learning-path')}
-                        className='px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity'
+                        className='px-4 py-1.5 rounded-lg text-sm font-semibold shrink-0 transition-all hover:opacity-90 hover:scale-[1.02]'
+                        style={{
+                          background:
+                            'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+                          color: 'hsl(var(--primary-foreground))',
+                          boxShadow: '0 0 12px hsl(var(--primary) / 0.3)',
+                        }}
                       >
                         Continue
                       </button>
@@ -265,14 +322,15 @@ export default function Index() {
 
             <button
               onClick={() => navigate('/learning-path')}
-              className='flex items-center gap-2 mt-6 text-[hsl(var(--primary))] hover:underline text-sm font-medium'
+              className='flex items-center gap-2 mt-6 text-[hsl(var(--primary))] hover:gap-3 transition-all text-sm font-semibold group'
             >
               View full learning path
-              <ArrowRight className='w-4 h-4' />
+              <ArrowRight className='w-4 h-4 group-hover:translate-x-1 transition-transform' />
             </button>
           </div>
 
-          <div className='h-140 min-h-0 overflow-hidden rounded-xl border border-[hsl(var(--border))]'>
+          {/* AI Assistant */}
+          <div className='h-[560px] min-h-0 overflow-hidden rounded-2xl border border-[hsl(var(--border))]'>
             <AIAssistant />
           </div>
         </div>
