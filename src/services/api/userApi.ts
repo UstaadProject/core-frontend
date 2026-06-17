@@ -20,6 +20,61 @@ export interface GeneratedQuiz {
   questions: QuizQuestion[];
 }
 
+export interface SkillAreaScore {
+  skillArea: string;
+  correct: number;
+  total: number;
+  proficiency: number; // 0..1
+  status: 'weak' | 'developing' | 'strong';
+}
+
+export interface SkillProfile {
+  overallLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+  scorePercent: number;
+  skillAreas: SkillAreaScore[];
+  weakTopics: string[];
+  strongTopics: string[];
+}
+
+export interface DiagnosisResult {
+  skill_level: string;
+  summary: string;
+  strengths: string[];
+  weak_areas: string[];
+  next_focus: string[];
+  recommendation: string;
+}
+
+export interface PathTopicRef {
+  topicId: string;
+  title: string;
+  depth: 'deep' | 'overview';
+}
+
+export interface PathModule {
+  id: string;
+  title: string;
+  difficulty: string;
+  topics: string[];
+  topicRefs: PathTopicRef[];
+  status: string;
+}
+
+export interface ComposedPath {
+  level: string;
+  status: string;
+  currentModule: string;
+  currentTopic: string;
+  modules: PathModule[];
+}
+
+export interface SubmitQuizResult {
+  evaluation: Record<string, unknown>;
+  diagnosis: DiagnosisResult;
+  skillProfile: SkillProfile;
+  learningPath: ComposedPath;
+}
+
 export interface UserSettings {
   emailNotifications: boolean;
   weeklyDigest: boolean;
@@ -87,13 +142,15 @@ export const generateOnboardingQuiz = async (
   return json.data.quiz as GeneratedQuiz;
 };
 
-export const submitOnboardingQuiz = async (answers: Record<string, string>) => {
+export const submitOnboardingQuiz = async (
+  answers: Record<string, string>
+): Promise<SubmitQuizResult> => {
   const response = await authFetch('/onboarding/quiz/submit', {
     method: 'POST',
     body: JSON.stringify({ answers }),
   });
   const json = await parseJson(response);
-  return json.data;
+  return json.data as SubmitQuizResult;
 };
 
 export const completeOnboarding = async (

@@ -1,0 +1,15 @@
+services:
+  frontend:
+    build: .
+    
+    container_name: frontend-local
+
+    ports:
+      - "5173:5173"
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    environment:
+      - CHOKIDAR_USEPOLLING=true

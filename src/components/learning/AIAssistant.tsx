@@ -106,11 +106,11 @@ function MessageContent({ content }: { content: string }) {
           return (
             <div key={index} className='my-2'>
               {part.language && (
-                <div className='text-[10px] uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-1'>
+                <div className='mb-1 text-[10px] uppercase tracking-wide text-muted-foreground'>
                   {part.language}
                 </div>
               )}
-              <pre className='overflow-x-auto rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] p-3 text-xs'>
+              <pre className='overflow-x-auto rounded-lg border border-border bg-background p-3 font-mono text-xs'>
                 <code>{part.value}</code>
               </pre>
             </div>
@@ -195,34 +195,33 @@ export function AIAssistant({
   };
 
   return (
-    <div className='flex h-full min-h-0 flex-col bg-[hsl(var(--card))] animate-slide-in-right'>
+    <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
-      <div className='flex items-center justify-between p-4 border-b border-[hsl(var(--border-muted))]'>
-        <div className='flex items-center gap-3'>
-          <div className='w-10 h-10 rounded-xl bg-linear-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center'>
-            <Sparkles className='w-5 h-5 text-[hsl(var(--primary-foreground))]' />
+      <div className="flex items-center justify-between border-b border-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
+            <Sparkles className="size-5" />
           </div>
           <div>
-            <h3 className='font-semibold text-[hsl(var(--foreground))]'>
-              Shagird
-            </h3>
-            <p className='text-xs text-[hsl(var(--muted-foreground))]'>
-              Always here to help
+            <h3 className="font-display font-bold leading-tight">Shagird</h3>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-success" />
+              Your AI tutor · online
             </p>
           </div>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className='p-2 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors'
+            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <X className='w-4 h-4' />
+            <X className="size-4" />
           </button>
         )}
       </div>
 
       {/* Messages */}
-      <div className='min-h-0 flex-1 overflow-y-auto p-4 space-y-4'>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((msg, i) => (
           <div
             key={i}
@@ -233,10 +232,10 @@ export function AIAssistant({
           >
             <div
               className={cn(
-                'max-w-[85%] px-4 py-3 rounded-2xl text-sm',
+                'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
                 msg.role === 'user'
-                  ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-br-sm'
-                  : 'bg-[hsl(var(--surface-elevated))] text-[hsl(var(--foreground))] rounded-bl-sm'
+                  ? 'rounded-br-md bg-primary text-primary-foreground'
+                  : 'rounded-bl-md bg-muted text-foreground'
               )}
             >
               {msg.role === 'ai' ? (
@@ -248,23 +247,23 @@ export function AIAssistant({
           </div>
         ))}
         {isLoading && (
-          <div className='flex justify-start'>
-            <div className='px-4 py-3 rounded-2xl rounded-bl-sm bg-[hsl(var(--surface-elevated))]'>
-              <Loader2 className='w-4 h-4 animate-spin text-[hsl(var(--muted-foreground))]' />
+          <div className="flex justify-start">
+            <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-3">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
             </div>
           </div>
         )}
       </div>
 
       {/* Quick Prompts */}
-      <div className='px-4 pb-2'>
-        <div className='flex flex-wrap gap-2'>
+      <div className="px-4 pb-2">
+        <div className="flex flex-wrap gap-2">
           {quickPrompts.map((prompt) => (
             <button
               key={prompt}
               onClick={() => setMessage(prompt)}
               disabled={isLoading}
-              className='px-3 py-1.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--primary))] transition-colors disabled:opacity-50'
+              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-primary disabled:opacity-50"
             >
               {prompt}
             </button>
@@ -273,26 +272,26 @@ export function AIAssistant({
       </div>
 
       {/* Input */}
-      <div className='p-4 border-t border-[hsl(var(--border-muted))]'>
-        <div className='flex items-center gap-2 bg-[hsl(var(--surface))] rounded-xl px-4 py-2'>
+      <div className="border-t border-border p-3">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-1.5 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-ring/30">
           <input
-            type='text'
+            type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder='Ask anything about your lessons...'
+            placeholder="Ask Shagird anything..."
             disabled={isLoading}
-            className='flex-1 bg-transparent text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-text))] focus:outline-none disabled:opacity-50'
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !message.trim()}
-            className='p-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity disabled:opacity-50'
+            className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {isLoading ? (
-              <Loader2 className='w-4 h-4 animate-spin' />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
-              <Send className='w-4 h-4' />
+              <Send className="size-4" />
             )}
           </button>
         </div>

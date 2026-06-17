@@ -8,9 +8,15 @@ import {
   Circle,
   Lock,
   Loader2,
+  PlayCircle,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LearningLayout } from '@/components/layout/LearningLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   getLearningPath,
   submitLearningFeedbackAndReplan,
@@ -18,222 +24,201 @@ import {
   type FullModule,
 } from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 
-interface ModuleCardProps {
-  module: FullModule;
-  index: number;
-  totalModules: number;
-}
+type TopicStatus = 'completed' | 'in-progress' | 'available' | 'locked';
 
-function ModuleCard({ module, index, totalModules }: ModuleCardProps) {
+function ModuleCard({ module }: { module: FullModule }) {
   const [isExpanded, setIsExpanded] = useState(module.status === 'in-progress');
   const navigate = useNavigate();
 
   const completedTopics = module.completedTopics?.length || 0;
   const totalTopics = module.topics?.length || 0;
   const progress = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
+  const locked = module.status === 'pending';
 
-  const getTopicStatus = (topic: string) => {
+  const getTopicStatus = (topic: string): TopicStatus => {
     if (module.completedTopics?.includes(topic)) return 'completed';
     if (module.status === 'pending') return 'locked';
-    // First incomplete topic in an in-progress module
     const firstIncomplete = module.topics.find(
       (t) => !module.completedTopics?.includes(t)
     );
     if (topic === firstIncomplete && module.status === 'in-progress')
       return 'in-progress';
-    // Check if previous topics are complete
     const topicIndex = module.topics.indexOf(topic);
-    const previousTopics = module.topics.slice(0, topicIndex);
-    const allPreviousComplete = previousTopics.every((t) =>
-      module.completedTopics?.includes(t)
-    );
+    const allPreviousComplete = module.topics
+      .slice(0, topicIndex)
+      .every((t) => module.completedTopics?.includes(t));
     return allPreviousComplete && module.status === 'in-progress'
       ? 'available'
       : 'locked';
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 className='w-6 h-6 text-[hsl(var(--success))]' />;
-      case 'in-progress':
-        return (
-          <div className='w-6 h-6 rounded-full border-2 border-[hsl(var(--primary))] flex items-center justify-center'>
-            <div className='w-2.5 h-2.5 rounded-full bg-[hsl(var(--primary))]' />
-          </div>
-        );
-      default:
-        return <Lock className='w-5 h-5 text-[hsl(var(--muted-text))]' />;
-    }
-  };
-
-  const getTopicIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 className='w-4 h-4 text-[hsl(var(--success))]' />;
-      case 'in-progress':
-        return (
-          <Circle className='w-4 h-4 text-[hsl(var(--primary))] fill-[hsl(var(--primary)/0.3)]' />
-        );
-      case 'available':
-        return <Circle className='w-4 h-4 text-[hsl(var(--primary))]' />;
-      default:
-        return <Circle className='w-4 h-4 text-[hsl(var(--muted-text))]' />;
-    }
-  };
-
-  const handleTopicClick = (topic: string, status: string) => {
+  const handleTopicClick = (topic: string, status: TopicStatus) => {
     if (status === 'locked') return;
-    // Navigate to topic/lesson page with module and topic info
     navigate(`/lesson/${module.id}/${encodeURIComponent(topic)}`);
   };
 
   return (
-    <div
-      className={cn(
-        'relative bg-[hsl(var(--card))] rounded-xl border transition-all duration-300',
-        module.status === 'in-progress'
-          ? 'border-[hsl(var(--primary)/0.5)] shadow-[0_0_30px_hsl(var(--primary)/0.1)]'
-          : 'border-[hsl(var(--border))]',
-        module.status === 'pending' && 'opacity-60'
-      )}
-      style={{ animationDelay: `${index * 0.1}s` }}
-    >
-      {/* Module Header */}
-      <button
-        onClick={() =>
-          module.status !== 'pending' && setIsExpanded(!isExpanded)
-        }
+    <div className="relative">
+      <Card
         className={cn(
-          'w-full flex items-center gap-4 p-5 text-left',
-          module.status !== 'pending' && 'hover:bg-[hsl(var(--muted)/0.3)]',
-          'transition-colors rounded-xl'
+          'overflow-hidden transition-colors',
+          module.status === 'in-progress' && 'border-primary/40',
+          locked && 'opacity-70'
         )}
-        disabled={module.status === 'pending'}
       >
-        {/* Status & Timeline */}
-        <div className='flex flex-col items-center'>
-          {getStatusIcon(module.status)}
-          {index < totalModules - 1 && (
-            <div
-              className={cn(
-                'w-0.5 h-8 mt-2',
-                module.status === 'completed'
-                  ? 'bg-[hsl(var(--success))]'
-                  : 'bg-[hsl(var(--border))]'
-              )}
-            />
+        <button
+          onClick={() => !locked && setIsExpanded((v) => !v)}
+          disabled={locked}
+          className={cn(
+            'flex w-full items-center gap-4 p-4 text-left',
+            !locked && 'hover:bg-accent/40'
           )}
-        </div>
-
-        {/* Content */}
-        <div className='flex-1 min-w-0'>
-          <h3 className='font-semibold text-lg text-[hsl(var(--foreground))]'>
-            {module.title}
-          </h3>
-          <p className='text-sm text-[hsl(var(--muted-foreground))] mt-0.5'>
-            {module.difficulty} • {totalTopics} topics
-          </p>
-
-          {module.status !== 'pending' && (
-            <div className='flex items-center gap-4 mt-3'>
-              <div className='flex-1 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
-                <div
-                  className='h-full bg-linear-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary-glow))] rounded-full transition-all duration-500'
-                  style={{ width: `${progress}%` }}
-                />
+        >
+          {/* status node */}
+          <div className="grid size-9 shrink-0 place-items-center">
+            {module.status === 'completed' ? (
+              <CheckCircle2 className="size-7 text-success" />
+            ) : module.status === 'in-progress' ? (
+              <div className="grid size-7 place-items-center rounded-full border-2 border-primary">
+                <div className="size-2.5 rounded-full bg-primary" />
               </div>
-              <span className='text-xs text-[hsl(var(--muted-foreground))] whitespace-nowrap'>
-                {completedTopics}/{totalTopics} topics
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Expand Icon */}
-        {module.status !== 'pending' && (
-          <div className='text-[hsl(var(--muted-foreground))]'>
-            {isExpanded ? (
-              <ChevronDown className='w-5 h-5' />
             ) : (
-              <ChevronRight className='w-5 h-5' />
+              <div className="grid size-7 place-items-center rounded-full border-2 border-border">
+                <Lock className="size-3.5 text-muted-foreground" />
+              </div>
             )}
           </div>
-        )}
-      </button>
 
-      {/* Topics List */}
-      {isExpanded && module.status !== 'pending' && (
-        <div className='px-5 pb-5 pl-16 stagger-children'>
-          <div className='space-y-1'>
-            {module.topics.map((topic) => {
-              const topicStatus = getTopicStatus(topic);
-              return (
-                <button
-                  key={topic}
-                  onClick={() => handleTopicClick(topic, topicStatus)}
-                  disabled={topicStatus === 'locked'}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all',
-                    topicStatus === 'locked'
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer',
-                    topicStatus === 'in-progress' &&
-                      'bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.3)]'
-                  )}
-                >
-                  {getTopicIcon(topicStatus)}
-                  <BookOpen className='w-4 h-4 text-[hsl(var(--muted-foreground))]' />
-                  <span
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate font-display text-base font-bold">
+                {module.title}
+              </h3>
+              <Badge
+                variant={
+                  module.status === 'completed'
+                    ? 'success'
+                    : module.status === 'in-progress'
+                      ? 'default'
+                      : 'secondary'
+                }
+                className="shrink-0 capitalize"
+              >
+                {module.status === 'in-progress' ? 'In progress' : module.status}
+              </Badge>
+            </div>
+            <p className="mt-0.5 text-sm capitalize text-muted-foreground">
+              {module.difficulty} · {totalTopics} topics
+            </p>
+            {!locked && (
+              <div className="mt-2.5 flex items-center gap-3">
+                <Progress
+                  value={progress}
+                  tone={module.status === 'completed' ? 'success' : 'primary'}
+                  size="sm"
+                />
+                <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+                  {completedTopics}/{totalTopics}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {!locked && (
+            <div className="text-muted-foreground">
+              {isExpanded ? (
+                <ChevronDown className="size-5" />
+              ) : (
+                <ChevronRight className="size-5" />
+              )}
+            </div>
+          )}
+        </button>
+
+        {isExpanded && !locked && (
+          <div className="border-t border-border bg-muted/20 p-3">
+            <div className="space-y-1">
+              {module.topics.map((topic) => {
+                const status = getTopicStatus(topic);
+                return (
+                  <button
+                    key={topic}
+                    onClick={() => handleTopicClick(topic, status)}
+                    disabled={status === 'locked'}
                     className={cn(
-                      'flex-1 text-sm',
-                      topicStatus === 'completed'
-                        ? 'text-[hsl(var(--muted-foreground))]'
-                        : 'text-[hsl(var(--foreground))]'
+                      'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
+                      status === 'locked'
+                        ? 'cursor-not-allowed opacity-50'
+                        : 'hover:bg-card',
+                      status === 'in-progress' &&
+                        'bg-primary/5 ring-1 ring-primary/20'
                     )}
                   >
-                    {topic}
-                  </span>
-                  {topicStatus === 'in-progress' && (
-                    <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'>
-                      Continue
+                    {status === 'completed' ? (
+                      <CheckCircle2 className="size-4 shrink-0 text-success" />
+                    ) : status === 'in-progress' ? (
+                      <PlayCircle className="size-4 shrink-0 text-primary" />
+                    ) : status === 'available' ? (
+                      <Circle className="size-4 shrink-0 text-primary" />
+                    ) : (
+                      <Lock className="size-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <BookOpen className="size-4 shrink-0 text-muted-foreground" />
+                    <span
+                      className={cn(
+                        'flex-1 truncate text-sm',
+                        status === 'completed'
+                          ? 'text-muted-foreground line-through decoration-success/40'
+                          : 'text-foreground'
+                      )}
+                    >
+                      {topic}
                     </span>
-                  )}
-                  {topicStatus === 'available' && (
-                    <span className='px-2 py-0.5 text-xs rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]'>
-                      Start
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                    {status === 'in-progress' && (
+                      <Badge className="shrink-0">Continue</Badge>
+                    )}
+                    {status === 'available' && (
+                      <Badge variant="secondary" className="shrink-0">
+                        Start
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Card>
     </div>
   );
 }
 
+const feedbackOptions: {
+  type: 'too_easy' | 'too_difficult' | 'already_know' | 'just_right';
+  label: string;
+  emoji: string;
+}[] = [
+  { type: 'too_easy', label: 'Too easy', emoji: '😴' },
+  { type: 'just_right', label: 'Just right', emoji: '🎯' },
+  { type: 'too_difficult', label: 'Too hard', emoji: '🥵' },
+  { type: 'already_know', label: 'I know this', emoji: '✅' },
+];
+
 export default function LearningPath() {
   const [loading, setLoading] = useState(true);
   const [isReplanning, setIsReplanning] = useState(false);
-  const [learningData, setLearningData] = useState<FullLearningPath | null>(
-    null
-  );
+  const [learningData, setLearningData] = useState<FullLearningPath | null>(null);
   const { toast } = useToast();
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-
-    const fetchLearningPath = async () => {
+    (async () => {
       try {
         setLoading(true);
-        const data = await getLearningPath();
-        setLearningData(data);
+        setLearningData(await getLearningPath());
       } catch (error) {
         toast({
           title: 'Failed to load learning path',
@@ -244,21 +229,17 @@ export default function LearningPath() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchLearningPath();
+    })();
   }, [toast]);
 
   const handleFeedback = async (
     feedbackType: 'too_easy' | 'too_difficult' | 'already_know' | 'just_right'
   ) => {
     if (!learningData?.learningPath) return;
-
     const activeModule =
       learningData.learningPath.modules.find(
-        (module) => module.id === learningData.learningPath.currentModule
+        (m) => m.id === learningData.learningPath.currentModule
       ) || learningData.learningPath.modules[0];
-
     if (!activeModule) return;
 
     const nextTopic =
@@ -275,10 +256,7 @@ export default function LearningPath() {
         moduleId: activeModule.id,
         topic: nextTopic,
       });
-
-      const updated = await getLearningPath();
-      setLearningData(updated);
-
+      setLearningData(await getLearningPath());
       toast({
         title: 'Learning path updated',
         description:
@@ -289,8 +267,7 @@ export default function LearningPath() {
     } catch (error) {
       toast({
         title: 'Could not update learning path',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
     } finally {
@@ -300,129 +277,117 @@ export default function LearningPath() {
 
   if (loading) {
     return (
-      <LearningLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <div className='flex flex-col items-center gap-4'>
-            <Loader2 className='w-8 h-8 animate-spin text-[hsl(var(--primary))]' />
-            <p className='text-[hsl(var(--muted-foreground))]'>
-              Loading your learning path...
-            </p>
+      <DashboardLayout>
+        <div className="grid h-[60vh] place-items-center">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p>Loading your learning path…</p>
           </div>
         </div>
-      </LearningLayout>
+      </DashboardLayout>
     );
   }
 
   if (!learningData?.learningPath?.modules?.length) {
     return (
-      <LearningLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <div className='flex flex-col items-center gap-4 text-center'>
-            <BookOpen className='w-12 h-12 text-[hsl(var(--muted-foreground))]' />
-            <h2 className='text-xl font-semibold text-[hsl(var(--foreground))]'>
-              No Learning Path Found
-            </h2>
-            <p className='text-[hsl(var(--muted-foreground))] max-w-md'>
-              It looks like your learning path hasn't been generated yet. Please
-              complete the onboarding quiz to get started.
-            </p>
-          </div>
+      <DashboardLayout>
+        <div className="grid h-[60vh] place-items-center">
+          <Card className="max-w-md text-center">
+            <CardContent className="flex flex-col items-center gap-3 p-8">
+              <div className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+                <BookOpen className="size-7" />
+              </div>
+              <h2 className="font-display text-xl font-bold">
+                No learning path yet
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Complete the onboarding quiz and we'll generate a personalized
+                path for you.
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </LearningLayout>
+      </DashboardLayout>
     );
   }
 
   const { learningPath } = learningData;
   const modules = learningPath.modules;
-  const completedModules = modules.filter(
-    (m) => m.status === 'completed'
-  ).length;
+  const completedModules = modules.filter((m) => m.status === 'completed').length;
+  const overall = modules.length
+    ? Math.round((completedModules / modules.length) * 100)
+    : 0;
 
   return (
-    <LearningLayout>
-      <div className='ui-page-shell max-w-4xl h-screen'>
+    <DashboardLayout>
+      <div className="animate-fade-in space-y-6">
         {/* Header */}
-        <div className='ui-page-header mb-8 animate-fade-in'>
-          <h1 className='ui-page-title'>Learning Path</h1>
-          <p className='ui-page-subtitle'>
-            Your personalized {learningPath.level} web development journey
+        <div>
+          <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+            Learning Path
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            Your personalized{' '}
+            <span className="font-medium capitalize text-primary">
+              {learningPath.level}
+            </span>{' '}
+            web development journey
           </p>
-
-          {/* Progress Overview */}
-          <div className='ui-surface-card flex items-center gap-4 mt-6 p-4'>
-            <div className='flex-1'>
-              <div className='flex items-center justify-between mb-2'>
-                <span className='text-sm text-[hsl(var(--muted-foreground))]'>
-                  Overall Progress
-                </span>
-                <span className='text-sm font-medium text-[hsl(var(--primary))]'>
-                  {completedModules} of {modules.length} modules
-                </span>
-              </div>
-              <div className='h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden'>
-                <div
-                  className='h-full bg-linear-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] rounded-full transition-all duration-700'
-                  style={{
-                    width: `${(completedModules / modules.length) * 100}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className='ui-surface-card mt-4 p-4'>
-            <p className='text-sm text-[hsl(var(--muted-foreground))] mb-3 font-medium'>
-              How is your current learning path feeling?
-            </p>
-            <div className='flex flex-wrap gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={isReplanning}
-                onClick={() => handleFeedback('too_easy')}
-              >
-                Too Easy
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={isReplanning}
-                onClick={() => handleFeedback('too_difficult')}
-              >
-                Too Difficult
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={isReplanning}
-                onClick={() => handleFeedback('already_know')}
-              >
-                I already know this
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={isReplanning}
-                onClick={() => handleFeedback('just_right')}
-              >
-                Just Right
-              </Button>
-            </div>
-          </div>
         </div>
 
-        {/* Modules */}
-        <div className='space-y-4 stagger-children'>
-          {modules.map((module, index) => (
-            <ModuleCard
-              key={module.id}
-              module={module}
-              index={index}
-              totalModules={modules.length}
-            />
+        {/* Overview */}
+        <Card>
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1">
+              <div className="mb-1.5 flex items-center justify-between text-sm">
+                <span className="font-medium text-muted-foreground">
+                  Overall progress
+                </span>
+                <span className="font-semibold tabular-nums">
+                  {completedModules} / {modules.length} modules
+                </span>
+              </div>
+              <Progress value={overall} tone="success" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Feedback */}
+        <Card>
+          <CardContent className="p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" />
+              <p className="text-sm font-medium">
+                How is the current pace feeling?
+              </p>
+              {isReplanning && (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {feedbackOptions.map((opt) => (
+                <Button
+                  key={opt.type}
+                  variant="outline"
+                  size="sm"
+                  disabled={isReplanning}
+                  onClick={() => handleFeedback(opt.type)}
+                >
+                  <span>{opt.emoji}</span>
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Modules timeline */}
+        <div className="space-y-4">
+          {modules.map((module) => (
+            <ModuleCard key={module.id} module={module} />
           ))}
         </div>
       </div>
-    </LearningLayout>
+    </DashboardLayout>
   );
 }

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import {
   getCurrentUser,
   updateCurrentUserSettings,
@@ -18,7 +20,6 @@ import {
   Palette,
   Lock,
   Shield,
-  Settings as SettingsIcon,
 } from 'lucide-react';
 
 const defaultSettings: UserSettings = {
@@ -32,40 +33,48 @@ const defaultSettings: UserSettings = {
 function SettingsSkeleton() {
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-3xl mx-auto space-y-6'>
-        <div className='skeleton skeleton-card h-20 w-2/5' />
-        <div className='skeleton skeleton-card h-64' />
-        <div className='skeleton skeleton-card h-56' />
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className="h-20 w-2/5 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-56 animate-pulse rounded-2xl bg-muted" />
       </div>
     </DashboardLayout>
   );
 }
 
+function Toggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'inline-flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors',
+        checked ? 'bg-primary' : 'bg-muted'
+      )}
+    >
+      <span
+        className={cn(
+          'inline-block size-5 rounded-full bg-white shadow-sm transition-transform',
+          checked ? 'translate-x-5' : 'translate-x-0'
+        )}
+      />
+    </button>
+  );
+}
+
 const toggleItems = [
-  {
-    key: 'emailNotifications',
-    label: 'Email Notifications',
-    desc: 'Get important updates via email',
-    icon: Mail,
-  },
-  {
-    key: 'weeklyDigest',
-    label: 'Weekly Digest',
-    desc: 'A summary of your week delivered every Monday',
-    icon: Bell,
-  },
-  {
-    key: 'productUpdates',
-    label: 'Product Updates',
-    desc: 'New features, improvements, and announcements',
-    icon: Megaphone,
-  },
-  {
-    key: 'reminderNotifications',
-    label: 'Learning Reminders',
-    desc: 'Stay on track with daily streak reminders',
-    icon: BookOpen,
-  },
+  { key: 'emailNotifications', label: 'Email Notifications', desc: 'Get important updates via email', icon: Mail },
+  { key: 'weeklyDigest', label: 'Weekly Digest', desc: 'A summary of your week every Monday', icon: Bell },
+  { key: 'productUpdates', label: 'Product Updates', desc: 'New features and announcements', icon: Megaphone },
+  { key: 'reminderNotifications', label: 'Learning Reminders', desc: 'Daily streak reminders to stay on track', icon: BookOpen },
 ] as const;
 
 type ToggleKey = (typeof toggleItems)[number]['key'];
@@ -85,8 +94,7 @@ export default function Settings() {
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-
-    const fetchSettings = async () => {
+    (async () => {
       try {
         setLoading(true);
         const user = await getCurrentUser();
@@ -101,9 +109,7 @@ export default function Settings() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchSettings();
+    })();
   }, [toast]);
 
   const handleSaveSettings = async () => {
@@ -114,8 +120,7 @@ export default function Settings() {
     } catch (error) {
       toast({
         title: 'Failed to save settings',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
     } finally {
@@ -128,7 +133,6 @@ export default function Settings() {
       toast({ title: 'Fill both password fields', variant: 'destructive' });
       return;
     }
-
     try {
       setChangingPassword(true);
       await changeCurrentUserPassword(
@@ -140,8 +144,7 @@ export default function Settings() {
     } catch (error) {
       toast({
         title: 'Failed to change password',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
     } finally {
@@ -153,136 +156,115 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className='max-w-3xl mx-auto'>
-        {/* Page banner */}
-        <div className='page-banner'>
-          <div className='flex items-center gap-4'>
-            <div
-              className='p-3 rounded-xl'
-              style={{ background: 'linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--accent)/0.15))' }}
-            >
-              <SettingsIcon className='w-6 h-6 text-[hsl(var(--primary))]' />
-            </div>
-            <div>
-              <h1 className='text-2xl font-extrabold font-display text-[hsl(var(--foreground))]'>
-                Settings
-              </h1>
-              <p className='text-[hsl(var(--muted-foreground))] text-sm mt-0.5'>
-                Configure notifications, preferences, and security
-              </p>
-            </div>
+      <div className="mx-auto max-w-3xl animate-fade-in space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Bell className="size-6" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+              Settings
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Notifications, preferences and security.
+            </p>
           </div>
         </div>
 
-        <div className='p-8 space-y-6'>
-          {/* Notifications & Preferences */}
-          <div className='ui-surface-card p-6 space-y-5 rounded-2xl'>
-            <div className='section-header'>
-              <div className='section-header-icon icon-bubble icon-bubble-primary'>
-                <Bell className='w-4 h-4 text-[hsl(var(--primary))]' />
-              </div>
-              <div>
-                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Notifications & Preferences</h2>
-                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>Control what updates you receive</p>
-              </div>
+        {/* Notifications */}
+        <Card>
+          <CardContent className="space-y-5 p-6">
+            <div>
+              <h2 className="font-display font-bold">Notifications & Preferences</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Control what updates you receive.
+              </p>
             </div>
 
-            <div className='space-y-3'>
+            <div className="space-y-3">
               {toggleItems.map(({ key, label, desc, icon: Icon }) => (
                 <div
                   key={key}
-                  className='flex items-center justify-between p-4 rounded-xl border border-[hsl(var(--border))] transition-all hover:border-[hsl(var(--border)/0.8)] hover:bg-[hsl(var(--muted)/0.2)]'
-                  style={{ background: 'hsl(var(--surface))' }}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-border p-4"
                 >
-                  <div className='flex items-center gap-3'>
-                    <div className='icon-bubble icon-bubble-primary p-2'>
-                      <Icon className='w-4 h-4 text-[hsl(var(--primary))]' />
+                  <div className="flex items-center gap-3">
+                    <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="size-4" />
                     </div>
                     <div>
-                      <p className='text-sm font-semibold text-[hsl(var(--foreground))]'>{label}</p>
-                      <p className='text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5'>{desc}</p>
+                      <p className="text-sm font-semibold">{label}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{desc}</p>
                     </div>
                   </div>
-                  {/* Toggle switch */}
-                  <label className='toggle-switch'>
-                    <input
-                      type='checkbox'
-                      checked={settings[key as ToggleKey] as boolean}
-                      onChange={(e) =>
-                        setSettings((prev) => ({ ...prev, [key]: e.target.checked }))
-                      }
-                    />
-                    <span className='toggle-track' />
-                  </label>
+                  <Toggle
+                    checked={settings[key as ToggleKey] as boolean}
+                    onChange={(v) =>
+                      setSettings((prev) => ({ ...prev, [key]: v }))
+                    }
+                  />
                 </div>
               ))}
             </div>
 
-            {/* Theme */}
-            <div className='pt-1'>
-              <div className='flex items-center gap-2 mb-2'>
-                <Palette className='w-4 h-4 text-[hsl(var(--accent))]' />
-                <span className='ui-field-label'>Theme Preference</span>
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <Palette className="size-4 text-info" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  Theme Preference
+                </span>
               </div>
               <select
                 value={settings.theme}
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, theme: e.target.value }))
                 }
-                className='w-full rounded-xl border border-[hsl(var(--border))] px-3 py-2.5 text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)] transition-all'
-                style={{ background: 'hsl(var(--background))' }}
+                className="h-11 w-full rounded-lg border border-input bg-background px-4 text-sm focus-visible:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <option value='system'>System (auto)</option>
-                <option value='light'>Light</option>
-                <option value='dark'>Dark</option>
+                <option value="system">System (auto)</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
               </select>
             </div>
 
-            <div className='pt-2'>
-              <Button
-                onClick={handleSaveSettings}
-                disabled={saving}
-                style={{
-                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-                  boxShadow: '0 0 16px hsl(var(--primary) / 0.3)',
-                  color: 'white',
-                }}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Settings'
-                )}
-              </Button>
-            </div>
-          </div>
+            <Button onClick={handleSaveSettings} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                'Save Settings'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
 
-          {/* Security — danger zone */}
-          <div className='danger-zone-card p-6 space-y-4 rounded-2xl'>
-            <div className='section-header'>
-              <div
-                className='section-header-icon icon-bubble'
-                style={{ background: 'hsl(var(--destructive)/0.15)' }}
-              >
-                <Shield className='w-4 h-4 text-[hsl(var(--destructive))]' />
+        {/* Security */}
+        <Card className="border-destructive/30">
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-center gap-3">
+              <div className="grid size-9 place-items-center rounded-xl bg-destructive/10 text-destructive">
+                <Shield className="size-4" />
               </div>
               <div>
-                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Security</h2>
-                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>Change your account password</p>
+                <h2 className="font-display font-bold">Security</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Change your account password.
+                </p>
               </div>
             </div>
 
-            <div className='space-y-3'>
-              <label>
-                <div className='flex items-center gap-1.5 mb-1.5'>
-                  <Lock className='w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]' />
-                  <span className='ui-field-label'>Current Password</span>
+            <div className="space-y-3">
+              <label className="block">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <Lock className="size-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Current Password
+                  </span>
                 </div>
                 <Input
-                  type='password'
+                  type="password"
                   value={passwordForm.currentPassword}
                   onChange={(e) =>
                     setPasswordForm((prev) => ({
@@ -290,16 +272,18 @@ export default function Settings() {
                       currentPassword: e.target.value,
                     }))
                   }
-                  placeholder='Enter current password'
+                  placeholder="Enter current password"
                 />
               </label>
-              <label>
-                <div className='flex items-center gap-1.5 mb-1.5'>
-                  <Lock className='w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]' />
-                  <span className='ui-field-label'>New Password</span>
+              <label className="block">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <Lock className="size-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    New Password
+                  </span>
                 </div>
                 <Input
-                  type='password'
+                  type="password"
                   value={passwordForm.newPassword}
                   onChange={(e) =>
                     setPasswordForm((prev) => ({
@@ -307,7 +291,7 @@ export default function Settings() {
                       newPassword: e.target.value,
                     }))
                   }
-                  placeholder='Choose a strong password'
+                  placeholder="Choose a strong password"
                 />
               </label>
             </div>
@@ -315,20 +299,20 @@ export default function Settings() {
             <Button
               onClick={handleChangePassword}
               disabled={changingPassword}
-              variant='outline'
-              className='border-[hsl(var(--destructive)/0.4)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]'
+              variant="outline"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               {changingPassword ? (
                 <>
-                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                  Updating...
+                  <Loader2 className="size-4 animate-spin" />
+                  Updating…
                 </>
               ) : (
                 'Change Password'
               )}
             </Button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

@@ -3,19 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   ArrowLeft,
-  Code,
-  Palette,
-  PenTool,
-  TrendingUp,
-  Video,
-  Music,
+  Layout,
+  Server,
+  Layers,
+  Database,
+  Smartphone,
+  Cloud,
   Sparkles,
   Target,
   Clock,
   Rocket,
+  TrendingUp,
+  Briefcase,
+  GraduationCap,
+  Check,
+  Zap,
+  ShieldCheck,
+  Flame,
+  BookOpen,
+  type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Logo } from '@/components/layout/Logo';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
   completeOnboarding,
@@ -23,234 +34,152 @@ import {
   submitOnboardingQuiz,
   type GeneratedQuiz,
   type OnboardingPreferences,
+  type SubmitQuizResult,
 } from '@/services/api/userApi';
 
-interface OptionCardProps {
-  icon: React.ReactNode;
+const prettyArea = (skillArea: string) =>
+  skillArea
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+const STATUS_META: Record<
+  'weak' | 'developing' | 'strong',
+  { label: string; bar: string; chip: string }
+> = {
+  weak: {
+    label: 'Needs focus',
+    bar: 'bg-rose-500',
+    chip: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+  },
+  developing: {
+    label: 'Developing',
+    bar: 'bg-amber-500',
+    chip: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  },
+  strong: {
+    label: 'Strong',
+    bar: 'bg-primary',
+    chip: 'bg-primary/10 text-primary',
+  },
+};
+
+interface OptionDef {
+  id: string;
   label: string;
-  description?: string;
-  selected: boolean;
-  onClick: () => void;
-  gradient?: string;
+  description: string;
+  icon: LucideIcon;
 }
 
-const OptionCard: React.FC<OptionCardProps> = ({
-  icon,
-  label,
-  description,
-  selected,
-  onClick,
-  gradient = 'from-primary/20 to-accent/20',
-}) => {
+const OptionCard: React.FC<{
+  option: OptionDef;
+  selected: boolean;
+  onClick: () => void;
+}> = ({ option, selected, onClick }) => {
+  const Icon = option.icon;
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`
-        relative p-4 rounded-xl border transition-all duration-300 text-left group
-        ${
-          selected
-            ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-            : 'border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50'
-        }
-      `}
-    >
-      {selected && (
-        <div
-          className={`absolute inset-0 rounded-xl bg-linear-to-br ${gradient} opacity-50`}
-        />
+      className={cn(
+        'group relative flex items-start gap-3 rounded-2xl border p-4 text-left transition-all',
+        selected
+          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+          : 'border-border bg-card hover:border-primary/40 hover:bg-accent/40'
       )}
-      <div className='relative flex items-start gap-3'>
-        <div
-          className={`
-          p-2 rounded-lg transition-all duration-300
-          ${selected ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground group-hover:text-primary'}
-        `}
-        >
-          {icon}
-        </div>
-        <div className='flex-1 min-w-0'>
-          <p
-            className={`font-medium ${selected ? 'text-foreground' : 'text-foreground/80'}`}
-          >
-            {label}
-          </p>
-          {description && (
-            <p className='text-sm text-muted-foreground mt-0.5'>
-              {description}
-            </p>
-          )}
-        </div>
-        {selected && (
-          <div className='absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse' />
+    >
+      <span
+        className={cn(
+          'grid size-10 shrink-0 place-items-center rounded-xl transition-colors',
+          selected
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-muted text-muted-foreground group-hover:text-primary'
         )}
+      >
+        <Icon className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold leading-tight">{option.label}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {option.description}
+        </p>
       </div>
+      <span
+        className={cn(
+          'grid size-5 shrink-0 place-items-center rounded-full border transition-all',
+          selected
+            ? 'border-primary bg-primary text-primary-foreground'
+            : 'border-border'
+        )}
+      >
+        {selected && <Check className="size-3.5" />}
+      </span>
     </button>
   );
 };
 
 const steps = [
   {
-    title: 'What skills interest you?',
-    subtitle: 'Select all that apply',
+    title: 'Which areas excite you most?',
+    subtitle: 'Pick all that apply — your path will lean into these.',
     multiple: true,
   },
   {
     title: "What's your experience level?",
-    subtitle: 'This helps us personalize your learning path',
+    subtitle: 'This sets the starting difficulty of your path.',
     multiple: false,
   },
   {
     title: "What's your main goal?",
-    subtitle: "We'll tailor your experience accordingly",
+    subtitle: "We'll tailor projects and milestones to match.",
     multiple: false,
   },
   {
     title: 'How much time can you commit?',
-    subtitle: 'Be realistic for the best results',
+    subtitle: 'Be realistic — consistency beats intensity.',
     multiple: false,
   },
 ];
 
-const skillOptions = [
-  {
-    id: 'web-dev',
-    label: 'Web Development',
-    description: 'HTML, CSS, JavaScript, React',
-    icon: <Code className='w-5 h-5' />,
-  },
-  {
-    id: 'design',
-    label: 'UI/UX Design',
-    description: 'Figma, user research, prototyping',
-    icon: <Palette className='w-5 h-5' />,
-  },
-  {
-    id: 'writing',
-    label: 'Content Writing',
-    description: 'Copywriting, blogging, SEO',
-    icon: <PenTool className='w-5 h-5' />,
-  },
-  {
-    id: 'marketing',
-    label: 'Digital Marketing',
-    description: 'Social media, ads, analytics',
-    icon: <TrendingUp className='w-5 h-5' />,
-  },
-  {
-    id: 'video',
-    label: 'Video Editing',
-    description: 'Premiere Pro, After Effects',
-    icon: <Video className='w-5 h-5' />,
-  },
-  {
-    id: 'audio',
-    label: 'Audio Production',
-    description: 'Podcasts, music, voiceovers',
-    icon: <Music className='w-5 h-5' />,
-  },
+const skillOptions: OptionDef[] = [
+  { id: 'frontend', label: 'Frontend', description: 'HTML, CSS, JavaScript, React', icon: Layout },
+  { id: 'backend', label: 'Backend', description: 'Node, APIs, auth, servers', icon: Server },
+  { id: 'fullstack', label: 'Full-Stack', description: 'End-to-end web apps', icon: Layers },
+  { id: 'databases', label: 'Databases', description: 'SQL, NoSQL, data modeling', icon: Database },
+  { id: 'responsive', label: 'Responsive UI', description: 'Mobile-first, accessible design', icon: Smartphone },
+  { id: 'devops', label: 'Deployment', description: 'Hosting, CI/CD, the cloud', icon: Cloud },
 ];
 
-const experienceOptions = [
-  {
-    id: 'beginner',
-    label: 'Complete Beginner',
-    description: 'Just starting out',
-    icon: <Sparkles className='w-5 h-5' />,
-    gradient: 'from-green-500/20 to-emerald-500/20',
-  },
-  {
-    id: 'some',
-    label: 'Some Experience',
-    description: 'Done a few projects',
-    icon: <Target className='w-5 h-5' />,
-    gradient: 'from-blue-500/20 to-cyan-500/20',
-  },
-  {
-    id: 'intermediate',
-    label: 'Intermediate',
-    description: 'Working professionally',
-    icon: <Rocket className='w-5 h-5' />,
-    gradient: 'from-purple-500/20 to-pink-500/20',
-  },
-  {
-    id: 'advanced',
-    label: 'Advanced',
-    description: 'Years of experience',
-    icon: <TrendingUp className='w-5 h-5' />,
-    gradient: 'from-orange-500/20 to-red-500/20',
-  },
+const experienceOptions: OptionDef[] = [
+  { id: 'beginner', label: 'Complete Beginner', description: 'Just starting out', icon: Sparkles },
+  { id: 'some', label: 'Some Experience', description: 'Built a few things', icon: Target },
+  { id: 'intermediate', label: 'Intermediate', description: 'Comfortable coding', icon: Rocket },
+  { id: 'advanced', label: 'Advanced', description: 'Years of practice', icon: TrendingUp },
 ];
 
-const goalOptions = [
-  {
-    id: 'start',
-    label: 'Start Freelancing',
-    description: 'Land my first clients',
-    icon: <Rocket className='w-5 h-5' />,
-    gradient: 'from-primary/20 to-accent/20',
-  },
-  {
-    id: 'improve',
-    label: 'Improve Skills',
-    description: 'Level up existing abilities',
-    icon: <TrendingUp className='w-5 h-5' />,
-    gradient: 'from-secondary/20 to-orange-500/20',
-  },
-  {
-    id: 'clients',
-    label: 'Get More Clients',
-    description: 'Scale my freelance business',
-    icon: <Target className='w-5 h-5' />,
-    gradient: 'from-accent/20 to-purple-500/20',
-  },
-  {
-    id: 'transition',
-    label: 'Career Transition',
-    description: 'Switch to freelancing full-time',
-    icon: <Sparkles className='w-5 h-5' />,
-    gradient: 'from-pink-500/20 to-primary/20',
-  },
+const goalOptions: OptionDef[] = [
+  { id: 'job', label: 'Land a Dev Job', description: 'Become job-ready', icon: Briefcase },
+  { id: 'freelance', label: 'Start Freelancing', description: 'Find my first clients', icon: Rocket },
+  { id: 'projects', label: 'Build Projects', description: 'Ship my own ideas', icon: Layers },
+  { id: 'transition', label: 'Career Switch', description: 'Move into tech', icon: GraduationCap },
 ];
 
-const timeOptions = [
-  {
-    id: '15min',
-    label: '15 minutes/day',
-    description: 'Quick daily practice',
-    icon: <Clock className='w-5 h-5' />,
-    gradient: 'from-green-500/20 to-emerald-500/20',
-  },
-  {
-    id: '30min',
-    label: '30 minutes/day',
-    description: 'Steady progress',
-    icon: <Clock className='w-5 h-5' />,
-    gradient: 'from-blue-500/20 to-cyan-500/20',
-  },
-  {
-    id: '1hour',
-    label: '1 hour/day',
-    description: 'Serious commitment',
-    icon: <Clock className='w-5 h-5' />,
-    gradient: 'from-purple-500/20 to-pink-500/20',
-  },
-  {
-    id: '2hours',
-    label: '2+ hours/day',
-    description: 'Intensive learning',
-    icon: <Clock className='w-5 h-5' />,
-    gradient: 'from-orange-500/20 to-red-500/20',
-  },
+const timeOptions: OptionDef[] = [
+  { id: '15min', label: '15 minutes/day', description: 'Quick daily practice', icon: Clock },
+  { id: '30min', label: '30 minutes/day', description: 'Steady progress', icon: Clock },
+  { id: '1hour', label: '1 hour/day', description: 'Serious commitment', icon: Clock },
+  { id: '2hours', label: '2+ hours/day', description: 'Intensive learning', icon: Clock },
 ];
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [phase, setPhase] = useState<'preferences' | 'quiz' | 'generating'>(
-    'preferences'
-  );
+  const [phase, setPhase] = useState<
+    'preferences' | 'quiz' | 'generating' | 'diagnosis'
+  >('preferences');
   const [quiz, setQuiz] = useState<GeneratedQuiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [diagnosis, setDiagnosis] = useState<SubmitQuizResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selections, setSelections] = useState<OnboardingPreferences>({
     skills: [],
@@ -262,35 +191,13 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const getOptionsForStep = (step: number) => {
-    switch (step) {
-      case 0:
-        return skillOptions;
-      case 1:
-        return experienceOptions;
-      case 2:
-        return goalOptions;
-      case 3:
-        return timeOptions;
-      default:
-        return [];
-    }
-  };
+  const getOptionsForStep = (step: number) =>
+    [skillOptions, experienceOptions, goalOptions, timeOptions][step] ?? [];
 
-  const getSelectionForStep = (step: number) => {
-    switch (step) {
-      case 0:
-        return selections.skills;
-      case 1:
-        return selections.experience;
-      case 2:
-        return selections.goal;
-      case 3:
-        return selections.time;
-      default:
-        return '';
-    }
-  };
+  const getSelectionForStep = (step: number) =>
+    [selections.skills, selections.experience, selections.goal, selections.time][
+      step
+    ] ?? '';
 
   const handleSelection = (id: string) => {
     if (currentStep === 0) {
@@ -311,21 +218,16 @@ const Onboarding = () => {
 
   const canProceedPreferences = () => {
     const selection = getSelectionForStep(currentStep);
-    if (Array.isArray(selection)) {
-      return selection.length > 0;
-    }
-    return selection !== '';
+    return Array.isArray(selection) ? selection.length > 0 : selection !== '';
   };
 
   const handleStartQuiz = async () => {
     try {
       setIsLoading(true);
       const generatedQuiz = await generateOnboardingQuiz(selections);
-
       if (!generatedQuiz?.questions?.length) {
         throw new Error('Quiz could not be generated.');
       }
-
       setQuiz(generatedQuiz);
       setCurrentQuestionIndex(0);
       setQuizAnswers({});
@@ -349,7 +251,6 @@ const Onboarding = () => {
       setCurrentStep((prev) => prev + 1);
       return;
     }
-
     await handleStartQuiz();
   };
 
@@ -361,16 +262,34 @@ const Onboarding = () => {
     try {
       setIsLoading(true);
       setPhase('generating');
-      await submitOnboardingQuiz(quizAnswers);
-      await completeOnboarding(selections);
+      const result = await submitOnboardingQuiz(quizAnswers);
+      setDiagnosis(result);
+      setPhase('diagnosis');
+    } catch (error) {
+      setPhase('quiz');
+      toast({
+        title: 'Assessment failed',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Something went wrong while evaluating your quiz.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const handleStartLearning = async () => {
+    try {
+      setIsLoading(true);
+      await completeOnboarding(selections);
       toast({
         title: 'Welcome to Ustaad!',
         description: 'Your personalized learning path is ready.',
       });
       navigate('/dashboard');
     } catch (error) {
-      setPhase('quiz');
       toast({
         title: 'Onboarding failed',
         description:
@@ -386,12 +305,10 @@ const Onboarding = () => {
 
   const handleQuizNext = async () => {
     if (!quiz) return;
-
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
       return;
     }
-
     await handleSubmitQuizAndComplete();
   };
 
@@ -405,10 +322,7 @@ const Onboarding = () => {
       }
       return;
     }
-
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    if (currentStep > 0) setCurrentStep((prev) => prev - 1);
   };
 
   const options = getOptionsForStep(currentStep);
@@ -420,194 +334,363 @@ const Onboarding = () => {
     ? quizAnswers[currentQuestion.id]
     : '';
 
+  const totalSteps = steps.length;
+  const progressPct =
+    phase === 'preferences'
+      ? ((currentStep + (canProceedPreferences() ? 1 : 0)) / totalSteps) * 100
+      : phase === 'quiz' && quiz
+        ? 100
+        : 100;
+
   return (
-    <div className='min-h-screen bg-background relative overflow-hidden'>
-      <div className='absolute inset-0 overflow-hidden'>
-        <div className='absolute -top-1/2 -left-1/2 w-full h-full bg-linear-to-br from-primary/10 via-transparent to-transparent rounded-full blur-3xl animate-pulse-glow' />
-        <div className='absolute -bottom-1/2 -right-1/2 w-full h-full bg-linear-to-tl from-secondary/10 via-transparent to-transparent rounded-full blur-3xl animate-pulse-glow delay-500' />
-      </div>
-
-      <div
-        className='absolute inset-0 opacity-[0.02]'
-        style={{
-          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
-                           linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px',
-        }}
-      />
-
-      <div className='relative z-10 container max-w-2xl mx-auto px-4 py-8 min-h-screen flex flex-col'>
-        <div className='flex items-center justify-between mb-8'>
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Top bar with logo + thin progress */}
+      <header className="border-b border-border bg-card/60 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
           <Logo />
           {phase === 'preferences' ? (
-            <div className='flex items-center gap-2'>
-              {steps.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === currentStep
-                      ? 'w-8 bg-gradient-hero'
-                      : index < currentStep
-                        ? 'w-2 bg-primary'
-                        : 'w-2 bg-muted'
-                  }`}
+            <span className="text-sm font-medium text-muted-foreground">
+              Step {currentStep + 1} of {totalSteps}
+            </span>
+          ) : phase === 'quiz' ? (
+            <span className="text-sm font-medium text-muted-foreground">
+              Question {currentQuestionIndex + 1} of {quiz?.questions.length || 0}
+            </span>
+          ) : null}
+        </div>
+        <div className="h-1 w-full bg-muted">
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-4 py-10">
+        {phase === 'preferences' && (
+          <div className="animate-fade-in">
+            <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
+              {steps[currentStep].title}
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {steps[currentStep].subtitle}
+            </p>
+
+            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {options.map((option) => (
+                <OptionCard
+                  key={option.id}
+                  option={option}
+                  selected={
+                    isMultiple
+                      ? (selection as string[]).includes(option.id)
+                      : selection === option.id
+                  }
+                  onClick={() => handleSelection(option.id)}
                 />
               ))}
             </div>
-          ) : phase === 'quiz' ? (
-            <p className='text-sm text-muted-foreground'>
-              Question {currentQuestionIndex + 1} of{' '}
-              {quiz?.questions.length || 0}
-            </p>
-          ) : (
-            <p className='text-sm text-muted-foreground'>
-              Generating your path...
-            </p>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className='flex-1 flex flex-col justify-center'>
-          {phase === 'preferences' && (
-            <div className='animate-slide-up'>
-              <h1 className='text-3xl md:text-4xl font-bold text-foreground mb-2'>
-                {steps[currentStep].title}
-              </h1>
-              <p className='text-lg text-muted-foreground mb-8'>
-                {steps[currentStep].subtitle}
-              </p>
-
-              <div className='grid gap-3 grid-cols-1 md:grid-cols-2'>
-                {options.map((option) => (
-                  <OptionCard
-                    key={option.id}
-                    icon={option.icon}
-                    label={option.label}
-                    description={option.description}
-                    gradient={(option as { gradient?: string }).gradient}
-                    selected={
-                      isMultiple
-                        ? (selection as string[]).includes(option.id)
-                        : selection === option.id
-                    }
-                    onClick={() => handleSelection(option.id)}
-                  />
-                ))}
-              </div>
+        {phase === 'quiz' && currentQuestion && (
+          <div className="animate-fade-in">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <Sparkles className="size-3.5" /> Skills assessment
             </div>
-          )}
+            <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+              Let's gauge your level
+            </h1>
+            <p className="mt-1.5 text-muted-foreground">
+              A few quick questions so we start you at the right difficulty.
+            </p>
 
-          {phase === 'quiz' && currentQuestion && (
-            <div className='animate-slide-up'>
-              <h1 className='text-2xl md:text-3xl font-bold text-foreground mb-2'>
-                Skills Assessment Quiz
-              </h1>
-              <p className='text-muted-foreground mb-6'>
-                This helps us set your ability level and generate the right
-                learning path.
-              </p>
-
-              <div className='rounded-xl border border-border bg-card/70 p-5 mb-4'>
-                <p className='text-sm text-muted-foreground mb-2'>
-                  {currentQuestion.topic || 'General'} •{' '}
+            <Card className="mt-6">
+              <CardContent className="p-5">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {currentQuestion.topic || 'General'} ·{' '}
                   {currentQuestion.difficulty || 'Mixed'}
                 </p>
-                <h2 className='text-lg font-semibold text-foreground'>
-                  {currentQuestion.question}
-                </h2>
-              </div>
+                <h2 className="text-lg font-semibold">{currentQuestion.question}</h2>
+              </CardContent>
+            </Card>
 
-              <div className='space-y-3'>
-                {currentQuestion.options.map((option) => (
+            <div className="mt-4 space-y-3">
+              {currentQuestion.options.map((option, i) => {
+                const active = selectedQuizOption === option;
+                return (
                   <button
                     key={option}
                     onClick={() =>
                       handleQuizOptionSelect(currentQuestion.id, option)
                     }
-                    className={`w-full text-left p-4 rounded-xl border transition-all ${
-                      selectedQuizOption === option
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border bg-muted/20 hover:border-primary/40'
-                    }`}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all',
+                      active
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                        : 'border-border bg-card hover:border-primary/40 hover:bg-accent/40'
+                    )}
                   >
-                    {option}
+                    <span
+                      className={cn(
+                        'grid size-7 shrink-0 place-items-center rounded-lg text-sm font-bold',
+                        active
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    <span className="text-sm font-medium">{option}</span>
                   </button>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {phase === 'generating' && (
+          <div className="flex animate-fade-in flex-col items-center justify-center text-center">
+            <div className="relative mb-6">
+              <div className="size-16 rounded-full border-4 border-muted border-t-primary animate-spin" />
+              <Sparkles className="absolute inset-0 m-auto size-6 text-primary" />
+            </div>
+            <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+              Building your learning path
+            </h1>
+            <p className="mt-2 max-w-md text-muted-foreground">
+              Shagird is analyzing your answers and assembling a personalized,
+              gamified journey just for you…
+            </p>
+          </div>
+        )}
+
+        {phase === 'diagnosis' && diagnosis && (
+          <div className="animate-fade-in">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <ShieldCheck className="size-3.5" /> Assessment complete
+            </div>
+            <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+              Here's where you stand
+            </h1>
+            <p className="mt-1.5 text-muted-foreground">
+              {diagnosis.diagnosis.summary}
+            </p>
+
+            {/* Level + path summary */}
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Zap className="size-3.5" /> Level
+                </div>
+                <p className="mt-1 text-lg font-bold">
+                  {diagnosis.skillProfile.overallLevel}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Target className="size-3.5" /> Score
+                </div>
+                <p className="mt-1 text-lg font-bold">
+                  {Math.round(diagnosis.skillProfile.scorePercent)}%
+                </p>
+              </div>
+              <div className="col-span-2 rounded-2xl border border-border bg-card p-4 sm:col-span-1">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <BookOpen className="size-3.5" /> Your path
+                </div>
+                <p className="mt-1 text-lg font-bold">
+                  {diagnosis.learningPath.modules.length} modules
+                </p>
               </div>
             </div>
-          )}
 
-          {phase === 'generating' && (
-            <div className='animate-slide-up flex flex-col items-center justify-center text-center'>
-              <div className='w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-6' />
-              <h1 className='text-2xl md:text-3xl font-bold text-foreground mb-2'>
-                Creating Your Learning Path
-              </h1>
-              <p className='text-muted-foreground mb-4 max-w-md'>
-                Our AI is analyzing your quiz results and creating a
-                personalized learning journey just for you...
+            {/* Per-skill-area proficiency bars */}
+            {diagnosis.skillProfile.skillAreas.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  Skill breakdown
+                </h2>
+                <div className="mt-3 space-y-3">
+                  {[...diagnosis.skillProfile.skillAreas]
+                    .sort((a, b) => a.proficiency - b.proficiency)
+                    .map((area) => {
+                      const meta = STATUS_META[area.status];
+                      const pct = Math.round(area.proficiency * 100);
+                      return (
+                        <div key={area.skillArea}>
+                          <div className="mb-1 flex items-center justify-between text-sm">
+                            <span className="font-medium">
+                              {prettyArea(area.skillArea)}
+                            </span>
+                            <span
+                              className={cn(
+                                'rounded-full px-2 py-0.5 text-xs font-semibold',
+                                meta.chip
+                              )}
+                            >
+                              {meta.label}
+                            </span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={cn('h-full rounded-full', meta.bar)}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Strengths vs focus */}
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+                    <ShieldCheck className="size-4" /> Strengths
+                  </div>
+                  <ul className="mt-2 space-y-1.5">
+                    {diagnosis.diagnosis.strengths.map((s) => (
+                      <li
+                        key={s}
+                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                      >
+                        <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-1.5 text-sm font-semibold text-rose-600 dark:text-rose-400">
+                    <Flame className="size-4" /> We'll focus on
+                  </div>
+                  <ul className="mt-2 space-y-1.5">
+                    {(diagnosis.diagnosis.next_focus.length > 0
+                      ? diagnosis.diagnosis.next_focus
+                      : diagnosis.diagnosis.weak_areas
+                    ).map((s) => (
+                      <li
+                        key={s}
+                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                      >
+                        <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-rose-500" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Path preview */}
+            <div className="mt-6">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                Your personalized path
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {diagnosis.diagnosis.recommendation}
               </p>
-              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                <Sparkles className='w-4 h-4 text-primary animate-pulse' />
-                <span>This may take a moment</span>
+              <div className="mt-3 space-y-2">
+                {diagnosis.learningPath.modules.slice(0, 6).map((module, i) => {
+                  const deepCount = module.topicRefs.filter(
+                    (t) => t.depth === 'deep'
+                  ).length;
+                  return (
+                    <div
+                      key={module.id}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+                    >
+                      <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">
+                          {module.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {module.topics.length} topics
+                          {deepCount > 0 && ` · ${deepCount} in-depth`}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium capitalize text-muted-foreground">
+                        {module.difficulty}
+                      </span>
+                    </div>
+                  );
+                })}
+                {diagnosis.learningPath.modules.length > 6 && (
+                  <p className="pl-1 text-xs text-muted-foreground">
+                    + {diagnosis.learningPath.modules.length - 6} more modules
+                  </p>
+                )}
               </div>
             </div>
-          )}
-        </div>
 
-        <div className='flex items-center justify-between pt-8'>
-          <Button
-            variant='ghost'
-            onClick={handleBack}
-            disabled={
-              isLoading ||
-              (phase === 'preferences' && currentStep === 0) ||
-              phase === 'generating'
-            }
-            className='gap-2'
-          >
-            <ArrowLeft className='w-4 h-4' />
-            Back
-          </Button>
-
-          {phase === 'preferences' ? (
             <Button
-              variant='gradient'
-              size='lg'
-              onClick={handlePreferencesNext}
-              disabled={!canProceedPreferences() || isLoading}
-              className='gap-2'
+              size="lg"
+              className="mt-8 w-full"
+              onClick={handleStartLearning}
+              disabled={isLoading}
             >
               {isLoading ? (
-                <div className='w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin' />
+                <div className="size-5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
               ) : (
                 <>
-                  {currentStep === steps.length - 1 ? 'Start Quiz' : 'Continue'}
-                  <ArrowRight className='w-4 h-4' />
+                  Start learning
+                  <ArrowRight className="size-4" />
                 </>
               )}
             </Button>
-          ) : phase === 'quiz' ? (
+          </div>
+        )}
+      </main>
+
+      {phase !== 'generating' && phase !== 'diagnosis' && (
+        <footer className="border-t border-border bg-card/60 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-4">
             <Button
-              variant='gradient'
-              size='lg'
-              onClick={handleQuizNext}
-              disabled={!selectedQuizOption || isLoading}
-              className='gap-2'
+              variant="ghost"
+              onClick={handleBack}
+              disabled={isLoading || (phase === 'preferences' && currentStep === 0)}
+            >
+              <ArrowLeft className="size-4" />
+              Back
+            </Button>
+
+            <Button
+              size="lg"
+              onClick={phase === 'preferences' ? handlePreferencesNext : handleQuizNext}
+              disabled={
+                isLoading ||
+                (phase === 'preferences'
+                  ? !canProceedPreferences()
+                  : !selectedQuizOption)
+              }
             >
               {isLoading ? (
-                <div className='w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin' />
+                <div className="size-5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
               ) : (
                 <>
-                  {currentQuestionIndex === (quiz?.questions.length || 1) - 1
-                    ? 'Finish Onboarding'
-                    : 'Next Question'}
-                  <ArrowRight className='w-4 h-4' />
+                  {phase === 'preferences'
+                    ? currentStep === steps.length - 1
+                      ? 'Start quiz'
+                      : 'Continue'
+                    : currentQuestionIndex === (quiz?.questions.length || 1) - 1
+                      ? 'Finish'
+                      : 'Next'}
+                  <ArrowRight className="size-4" />
                 </>
               )}
             </Button>
-          ) : null}
-        </div>
-      </div>
+          </div>
+        </footer>
+      )}
     </div>
   );
 };

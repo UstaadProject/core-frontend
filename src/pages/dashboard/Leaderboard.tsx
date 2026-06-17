@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Trophy, Flame, Zap, Clock } from 'lucide-react';
+import { Trophy, Flame, Zap, Clock, Crown } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   getLeaderboard,
   type LeaderboardUser,
@@ -10,25 +13,39 @@ import { useToast } from '@/hooks/use-toast';
 function LeaderboardSkeleton() {
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-7xl mx-auto space-y-6'>
-        <div className='skeleton skeleton-card h-20 w-2/5' />
-        <div className='grid grid-cols-3 gap-5'>
-          {[...Array(3)].map((_, i) => <div key={i} className='skeleton skeleton-card h-56' />)}
+      <div className="space-y-6">
+        <div className="h-20 w-2/5 animate-pulse rounded-2xl bg-muted" />
+        <div className="grid grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-52 animate-pulse rounded-2xl bg-muted" />
+          ))}
         </div>
-        <div className='skeleton skeleton-card h-96' />
+        <div className="h-96 animate-pulse rounded-2xl bg-muted" />
       </div>
     </DashboardLayout>
   );
 }
 
-const medalColors = [
-  { label: '#1', bg: 'rank-gold', glow: 'rgba(245,158,11,0.4)', podiumH: 'h-40' },
-  { label: '#2', bg: 'rank-silver', glow: 'rgba(148,163,184,0.3)', podiumH: 'h-32' },
-  { label: '#3', bg: 'rank-bronze', glow: 'rgba(205,127,50,0.3)', podiumH: 'h-28' },
+// gradient + ring per podium rank (0=gold,1=silver,2=bronze)
+const podiumStyles = [
+  { ring: 'ring-badge', avatar: 'bg-badge text-white', block: 'h-32', glow: 'shadow-[0_8px_32px_-8px_var(--badge)]' },
+  { ring: 'ring-muted-foreground/40', avatar: 'bg-muted-foreground text-white', block: 'h-24', glow: '' },
+  { ring: 'ring-streak/50', avatar: 'bg-streak text-white', block: 'h-20', glow: '' },
 ];
+const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd
 
-// Podium order: 2nd, 1st, 3rd
-const podiumOrder = [1, 0, 2];
+function Avatar({ name, className }: { name: string; className?: string }) {
+  return (
+    <div
+      className={cn(
+        'grid place-items-center rounded-full font-bold uppercase',
+        className
+      )}
+    >
+      {name.charAt(0)}
+    </div>
+  );
+}
 
 export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
@@ -39,12 +56,10 @@ export default function Leaderboard() {
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-
-    const fetchLeaderboard = async () => {
+    (async () => {
       try {
         setLoading(true);
-        const data = await getLeaderboard();
-        setUsers(data);
+        setUsers(await getLeaderboard());
       } catch (error) {
         toast({
           title: 'Failed to load leaderboard',
@@ -55,9 +70,7 @@ export default function Leaderboard() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchLeaderboard();
+    })();
   }, [toast]);
 
   if (loading) return <LeaderboardSkeleton />;
@@ -66,189 +79,138 @@ export default function Leaderboard() {
 
   return (
     <DashboardLayout>
-      <div className='max-w-7xl mx-auto'>
-        {/* Page banner */}
-        <div className='page-banner'>
-          <div className='max-w-7xl mx-auto'>
-            <div className='flex items-center gap-4 mb-2'>
-              <div
-                className='p-3 rounded-xl'
-                style={{ background: 'linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--accent)/0.15))' }}
-              >
-                <Trophy className='w-7 h-7 animate-trophy' style={{ color: '#f59e0b' }} />
-              </div>
-              <div>
-                <h1 className='text-3xl font-extrabold font-display text-[hsl(var(--foreground))]'>
-                  Leaderboard
-                </h1>
-                <p className='text-[hsl(var(--muted-foreground))] text-sm mt-0.5'>
-                  Compete with learners based on XP, streaks, and learning progress
-                </p>
-              </div>
-            </div>
+      <div className="animate-fade-in space-y-8">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <div className="grid size-12 place-items-center rounded-2xl bg-badge/15 text-badge">
+            <Trophy className="size-6" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+              Leaderboard
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Compete on XP, streaks and learning progress.
+            </p>
           </div>
         </div>
 
-        <div className='p-8 space-y-8'>
-          {/* Podium */}
-          {topThree.length >= 3 && (
-            <div className='flex items-end justify-center gap-4 mb-2'>
-              {podiumOrder.map((rank) => {
-                const user = topThree[rank];
-                if (!user) return null;
-                const medal = medalColors[rank];
-                const isFirst = rank === 0;
-
-                return (
-                  <div
-                    key={user.email}
-                    className={`flex flex-col items-center gap-3 animate-slide-up`}
-                    style={{ animationDelay: `${rank * 0.1}s` }}
-                  >
-                    {/* User card */}
-                    <div
-                      className={`relative border rounded-2xl p-5 w-44 text-center transition-all hover:scale-[1.03] ${
-                        rank === 0 ? 'podium-1' : rank === 1 ? 'podium-2' : 'podium-3'
-                      }`}
-                      style={{
-                        boxShadow: `0 8px 32px ${medal.glow}`,
-                        border: `1px solid ${medal.glow}`,
-                      }}
-                    >
-                      {isFirst && (
-                        <div className='absolute -top-4 left-1/2 -translate-x-1/2 text-2xl animate-bounce-subtle'>
-                          👑
-                        </div>
+        {/* Podium */}
+        {topThree.length >= 3 && (
+          <div className="flex items-end justify-center gap-3 sm:gap-5">
+            {podiumOrder.map((rank) => {
+              const user = topThree[rank];
+              if (!user) return null;
+              const style = podiumStyles[rank];
+              return (
+                <div key={user.email} className="flex w-28 flex-col items-center gap-3 sm:w-40">
+                  <Card className={cn('relative w-full text-center', style.glow)}>
+                    <CardContent className="p-4">
+                      {rank === 0 && (
+                        <Crown className="absolute -top-3.5 left-1/2 size-7 -translate-x-1/2 fill-badge/30 text-badge" />
                       )}
-                      {/* Avatar */}
-                      <div
-                        className={`w-14 h-14 rounded-full mx-auto flex items-center justify-center text-white text-xl font-extrabold mb-3 ${medal.bg}`}
-                      >
-                        {user.name.charAt(0).toUpperCase()}
+                      <Avatar
+                        name={user.name}
+                        className={cn('mx-auto size-12 text-lg ring-2 ring-offset-2 ring-offset-card', style.ring, style.avatar)}
+                      />
+                      <p className="mt-2.5 truncate text-sm font-bold">{user.name}</p>
+                      <div className="mt-1 flex items-center justify-center gap-1 text-sm font-bold text-xp">
+                        <Zap className="size-3.5" />
+                        {user.xp.toLocaleString()}
                       </div>
-                      <p className='font-bold text-[hsl(var(--foreground))] text-sm truncate'>
-                        {user.name}
-                      </p>
-                      <div className='flex items-center justify-center gap-1 mt-1.5'>
-                        <Zap className='w-3.5 h-3.5 text-[hsl(var(--accent))]' />
-                        <span className='text-[hsl(var(--accent))] font-bold text-sm'>
-                          {user.xp.toLocaleString()} XP
-                        </span>
-                      </div>
-                      <div className='flex items-center justify-center gap-2 mt-2 text-[11px] text-[hsl(var(--muted-foreground))]'>
-                        <span className='flex items-center gap-0.5'>
-                          <Flame className='w-3 h-3' /> {user.streakDays}d
+                      <div className="mt-1.5 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-0.5">
+                          <Flame className="size-3" /> {user.streakDays}d
                         </span>
                         <span>·</span>
-                        <span className='flex items-center gap-0.5'>
-                          <Clock className='w-3 h-3' /> {Math.round(user.hoursLearned)}h
+                        <span className="flex items-center gap-0.5">
+                          <Clock className="size-3" /> {Math.round(user.hoursLearned)}h
                         </span>
                       </div>
-                    </div>
-
-                    {/* Podium block */}
-                    <div
-                      className={`w-44 ${medal.podiumH} rounded-t-xl flex items-center justify-center font-extrabold text-2xl text-white ${medal.bg}`}
-                    >
-                      {medal.label}
-                    </div>
+                    </CardContent>
+                  </Card>
+                  <div
+                    className={cn(
+                      'grid w-full place-items-center rounded-t-xl font-display text-2xl font-extrabold text-white',
+                      style.block,
+                      style.avatar
+                    )}
+                  >
+                    #{rank + 1}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-          {/* Full Rankings Table */}
-          <div
-            className='rounded-2xl overflow-hidden border border-[hsl(var(--border))]'
-            style={{ background: 'hsl(var(--card))' }}
-          >
-            <div
-              className='px-6 py-4 border-b border-[hsl(var(--border))]'
-              style={{ background: 'hsl(var(--surface))' }}
-            >
-              <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>
-                Full Rankings
-              </h2>
-            </div>
-            <div className='overflow-x-auto'>
-              <table className='w-full premium-table'>
-                <thead>
-                  <tr className='text-left'>
-                    {['Rank', 'Learner', 'XP', 'Streak', 'Skills', 'Hours', 'Modules'].map((h) => (
+        {/* Full rankings */}
+        <Card className="overflow-hidden">
+          <div className="border-b border-border px-6 py-4">
+            <h2 className="font-display font-bold">Full Rankings</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left">
+                  {['Rank', 'Learner', 'XP', 'Streak', 'Skills', 'Hours', 'Modules'].map(
+                    (h) => (
                       <th
                         key={h}
-                        className='px-5 py-3.5 text-[11px] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-widest'
+                        className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
                       >
                         {h}
                       </th>
-                    ))}
+                    )
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr
+                    key={user.email}
+                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-accent/40"
+                  >
+                    <td className="px-5 py-3">
+                      <Badge
+                        variant={user.rank <= 3 ? 'badge' : 'secondary'}
+                        className="tabular-nums"
+                      >
+                        #{user.rank}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar
+                          name={user.name}
+                          className="size-8 bg-primary text-xs text-primary-foreground"
+                        />
+                        <span className="font-semibold">{user.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center gap-1 font-semibold text-xp">
+                        <Zap className="size-3.5" />
+                        {user.xp.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center gap-1 text-streak">
+                        <Flame className="size-3.5" />
+                        {user.streakDays}d
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 tabular-nums">{user.skillsMastered}</td>
+                    <td className="px-5 py-3 tabular-nums">
+                      {Math.round(user.hoursLearned)}h
+                    </td>
+                    <td className="px-5 py-3 tabular-nums">{user.modulesCompleted}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {users.map((user, idx) => (
-                    <tr
-                      key={user.email}
-                      className='animate-slide-up'
-                      style={{ animationDelay: `${idx * 0.03}s` }}
-                    >
-                      <td className='px-5 py-3.5'>
-                        <span
-                          className={`pill text-[11px] font-bold ${
-                            user.rank === 1
-                              ? 'rank-gold'
-                              : user.rank === 2
-                                ? 'rank-silver'
-                                : user.rank === 3
-                                  ? 'rank-bronze'
-                                  : 'pill-primary'
-                          }`}
-                          style={{ borderRadius: '9999px', padding: '2px 8px' }}
-                        >
-                          #{user.rank}
-                        </span>
-                      </td>
-                      <td className='px-5 py-3.5'>
-                        <div className='flex items-center gap-2.5'>
-                          <div
-                            className='w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0'
-                            style={{
-                              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-                            }}
-                          >
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className='font-semibold text-sm text-[hsl(var(--foreground))]'>
-                            {user.name}
-                          </span>
-                        </div>
-                      </td>
-                      <td className='px-5 py-3.5'>
-                        <span className='pill pill-accent text-[11px]'>
-                          ⚡ {user.xp.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className='px-5 py-3.5'>
-                        <span className='text-sm text-[hsl(var(--foreground))]'>
-                          🔥 {user.streakDays}d
-                        </span>
-                      </td>
-                      <td className='px-5 py-3.5 text-sm text-[hsl(var(--foreground))]'>
-                        {user.skillsMastered}
-                      </td>
-                      <td className='px-5 py-3.5 text-sm text-[hsl(var(--foreground))]'>
-                        {Math.round(user.hoursLearned)}h
-                      </td>
-                      <td className='px-5 py-3.5 text-sm text-[hsl(var(--foreground))]'>
-                        {user.modulesCompleted}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </Card>
       </div>
     </DashboardLayout>
   );

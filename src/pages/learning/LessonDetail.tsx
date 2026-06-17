@@ -8,19 +8,22 @@ import {
   AlertTriangle,
   Lightbulb,
   ListTodo,
-  Folder,
   Loader2,
   ChevronRight,
+  Sparkles,
+  X,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LearningLayout } from '@/components/layout/LearningLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { AIAssistant } from '@/components/learning/AIAssistant';
+import { ConfettiBurst } from '@/components/gamification';
 import {
   getTopicContent,
   completeTopic,
-  submitProject,
   type TopicContent,
 } from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
@@ -37,28 +40,14 @@ const parseContentParts = (content: string): ContentPart[] => {
 
   while ((match = codeRegex.exec(content)) !== null) {
     if (match.index > lastIndex) {
-      parts.push({
-        type: 'text',
-        value: content.slice(lastIndex, match.index).trim(),
-      });
+      parts.push({ type: 'text', value: content.slice(lastIndex, match.index).trim() });
     }
-
-    parts.push({
-      type: 'code',
-      language: match[1],
-      value: match[2].trim(),
-    });
-
+    parts.push({ type: 'code', language: match[1], value: match[2].trim() });
     lastIndex = codeRegex.lastIndex;
   }
-
   if (lastIndex < content.length) {
-    parts.push({
-      type: 'text',
-      value: content.slice(lastIndex).trim(),
-    });
+    parts.push({ type: 'text', value: content.slice(lastIndex).trim() });
   }
-
   return parts.filter((part) => part.value.length > 0);
 };
 
@@ -69,14 +58,11 @@ const renderInlineTokens = (text: string): ReactNode[] => {
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(text.slice(lastIndex, match.index));
-    }
-
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
     const token = match[0];
     if (token.startsWith('**') && token.endsWith('**')) {
       nodes.push(
-        <strong key={`b-${match.index}`} className='font-semibold'>
+        <strong key={`b-${match.index}`} className="font-semibold text-foreground">
           {token.slice(2, -2)}
         </strong>
       );
@@ -84,72 +70,53 @@ const renderInlineTokens = (text: string): ReactNode[] => {
       nodes.push(
         <code
           key={`c-${match.index}`}
-          className='rounded bg-[hsl(var(--background))] px-1 py-0.5 text-[0.85em] text-[hsl(var(--foreground))]'
+          className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground"
         >
           {token.slice(1, -1)}
         </code>
       );
     }
-
     lastIndex = regex.lastIndex;
   }
-
-  if (lastIndex < text.length) {
-    nodes.push(text.slice(lastIndex));
-  }
-
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
   return nodes;
 };
 
 const renderTextBlock = (text: string): ReactNode[] => {
   const lines = text.split('\n').filter((line) => line.trim().length > 0);
-
   return lines.map((line, index) => {
     const trimmed = line.trim();
-
     if (trimmed.startsWith('### ')) {
       return (
-        <h4 key={index} className='text-base font-semibold mt-2 mb-1'>
+        <h4 key={index} className="mb-1 mt-3 font-display text-base font-semibold">
           {renderInlineTokens(trimmed.replace('### ', ''))}
         </h4>
       );
     }
-
     if (trimmed.startsWith('## ')) {
       return (
-        <h3 key={index} className='text-lg font-semibold mt-2 mb-1'>
+        <h3 key={index} className="mb-1 mt-3 font-display text-lg font-bold">
           {renderInlineTokens(trimmed.replace('## ', ''))}
         </h3>
       );
     }
-
     if (trimmed.startsWith('# ')) {
       return (
-        <h2 key={index} className='text-xl font-bold mt-2 mb-1'>
+        <h2 key={index} className="mb-1 mt-3 font-display text-xl font-bold">
           {renderInlineTokens(trimmed.replace('# ', ''))}
         </h2>
       );
     }
-
     if (/^[-*]\s+/.test(trimmed)) {
       return (
-        <div key={index} className='flex items-start gap-2 my-1'>
-          <span>•</span>
+        <div key={index} className="my-1 flex items-start gap-2">
+          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
           <span>{renderInlineTokens(trimmed.replace(/^[-*]\s+/, ''))}</span>
         </div>
       );
     }
-
-    if (/^\d+\.\s+/.test(trimmed)) {
-      return (
-        <p key={index} className='my-1 whitespace-pre-wrap leading-relaxed'>
-          {renderInlineTokens(trimmed)}
-        </p>
-      );
-    }
-
     return (
-      <p key={index} className='my-1 whitespace-pre-wrap leading-relaxed'>
+      <p key={index} className="my-1.5 leading-relaxed">
         {renderInlineTokens(trimmed)}
       </p>
     );
@@ -158,69 +125,64 @@ const renderTextBlock = (text: string): ReactNode[] => {
 
 function RichTextContent({ content }: { content: string }) {
   const parts = parseContentParts(content);
-
   return (
-    <div className='space-y-2'>
+    <div className="space-y-2 text-sm leading-relaxed text-foreground/90">
       {parts.map((part, index) => {
         if (part.type === 'code') {
           return (
-            <div key={index} className='my-2'>
+            <div key={index} className="my-3">
               {part.language && (
-                <div className='text-[10px] uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-1'>
+                <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                   {part.language}
                 </div>
               )}
-              <pre className='overflow-x-auto rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))] p-3 text-sm'>
+              <pre className="overflow-x-auto rounded-lg border border-border bg-muted/50 p-3 font-mono text-xs">
                 <code>{part.value}</code>
               </pre>
             </div>
           );
         }
-
         return <div key={index}>{renderTextBlock(part.value)}</div>;
       })}
     </div>
   );
 }
 
-// Simple code formatter component
 function CodeBlock({ code }: { code: string }) {
   return (
-    <pre className='bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg p-4 overflow-x-auto text-sm'>
-      <code className='text-[hsl(var(--foreground))]'>{code}</code>
+    <pre className="overflow-x-auto rounded-lg border border-border bg-muted/50 p-4 font-mono text-xs leading-relaxed">
+      <code className="text-foreground">{code}</code>
     </pre>
   );
 }
 
-// Section component for consistent styling
 function ContentSection({
   title,
   icon: Icon,
+  tone = 'primary',
   children,
-  className,
 }: {
   title: string;
   icon: React.ElementType;
+  tone?: 'primary' | 'success' | 'destructive' | 'info';
   children: React.ReactNode;
-  className?: string;
 }) {
+  const toneMap = {
+    primary: 'bg-primary/10 text-primary',
+    success: 'bg-success/12 text-success',
+    destructive: 'bg-destructive/10 text-destructive',
+    info: 'bg-info/12 text-info',
+  } as const;
   return (
-    <div
-      className={cn(
-        'bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6',
-        className
-      )}
-    >
-      <div className='flex items-center gap-3 mb-4'>
-        <div className='w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center'>
-          <Icon className='w-4 h-4 text-[hsl(var(--primary))]' />
+    <section className="scroll-mt-6">
+      <div className="mb-3 flex items-center gap-2.5">
+        <div className={cn('grid size-7 place-items-center rounded-lg', toneMap[tone])}>
+          <Icon className="size-4" />
         </div>
-        <h3 className='font-semibold text-lg text-[hsl(var(--foreground))]'>
-          {title}
-        </h3>
+        <h3 className="font-display text-lg font-bold">{title}</h3>
       </div>
       {children}
-    </div>
+    </section>
   );
 }
 
@@ -235,26 +197,19 @@ export default function LessonDetail() {
 
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
-  const [submittingProject, setSubmittingProject] = useState(false);
   const [content, setContent] = useState<TopicContent | null>(null);
-  const [projectTitle, setProjectTitle] = useState('');
-  const [projectSummary, setProjectSummary] = useState('');
-  const [repositoryUrl, setRepositoryUrl] = useState('');
-  const [liveUrl, setLiveUrl] = useState('');
-  const [techStack, setTechStack] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [mobileTutorOpen, setMobileTutorOpen] = useState(false);
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-
-    const fetchContent = async () => {
+    (async () => {
       if (!moduleId || !topic) return;
-
       try {
         setLoading(true);
-        const data = await getTopicContent(moduleId, topic);
-        setContent(data);
+        setContent(await getTopicContent(moduleId, topic));
       } catch (error) {
         toast({
           title: 'Failed to load content',
@@ -265,387 +220,287 @@ export default function LessonDetail() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchContent();
+    })();
   }, [moduleId, topic, toast]);
-
-  useEffect(() => {
-    if (!content) return;
-    if (!projectTitle.trim()) {
-      setProjectTitle(`${content.topic} Project`);
-    }
-    if (!projectSummary.trim() && content.mini_project) {
-      setProjectSummary(content.mini_project);
-    }
-  }, [content, projectTitle, projectSummary]);
 
   const handleComplete = async () => {
     if (!moduleId || !topic) return;
-
     try {
       setCompleting(true);
       const result = await completeTopic(moduleId, topic);
+      setShowConfetti(true);
       toast({
         title: result.message,
-        description: `You earned ${result.xpEarned} XP!`,
+        description: `You earned ${result.xpEarned} XP! 🎉`,
       });
-      navigate('/learning-path');
+      setTimeout(() => navigate('/learning-path'), 1400);
     } catch (error) {
       toast({
         title: 'Failed to complete topic',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
-    } finally {
       setCompleting(false);
-    }
-  };
-
-  const handleSubmitProject = async () => {
-    if (!moduleId || !topic) return;
-    if (!projectTitle.trim()) {
-      toast({
-        title: 'Project title is required',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setSubmittingProject(true);
-      await submitProject({
-        moduleId,
-        topic,
-        title: projectTitle.trim(),
-        summary: projectSummary.trim(),
-        repositoryUrl: repositoryUrl.trim(),
-        liveUrl: liveUrl.trim(),
-        techStack: techStack
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean),
-      });
-
-      toast({
-        title: 'Project submitted',
-        description: 'This project will now be used in Resume Builder.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Failed to submit project',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
-        variant: 'destructive',
-      });
-    } finally {
-      setSubmittingProject(false);
     }
   };
 
   if (loading) {
     return (
-      <LearningLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <div className='flex flex-col items-center gap-4 text-center'>
-            <Loader2 className='w-8 h-8 animate-spin text-[hsl(var(--primary))]' />
+      <DashboardLayout>
+        <div className="grid h-[60vh] place-items-center">
+          <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+            <div className="relative">
+              <div className="size-14 animate-spin rounded-full border-4 border-muted border-t-primary" />
+              <Sparkles className="absolute inset-0 m-auto size-5 text-primary" />
+            </div>
             <div>
-              <h2 className='text-xl font-semibold text-[hsl(var(--foreground))]'>
-                Generating Content
-              </h2>
-              <p className='text-[hsl(var(--muted-foreground))] mt-1'>
-                Our AI is creating personalized content for "{topic}"...
-              </p>
-              <p className='text-sm text-[hsl(var(--muted-foreground))] mt-2'>
-                This may take a moment
+              <h2 className="font-display text-lg font-bold">Generating content</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Shagird is preparing a personalized lesson on “{topic}”…
               </p>
             </div>
           </div>
         </div>
-      </LearningLayout>
+      </DashboardLayout>
     );
   }
 
   if (!content) {
     return (
-      <LearningLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <div className='flex flex-col items-center gap-4 text-center'>
-            <AlertTriangle className='w-12 h-12 text-[hsl(var(--destructive))]' />
-            <h2 className='text-xl font-semibold text-[hsl(var(--foreground))]'>
-              Content Not Available
-            </h2>
-            <p className='text-[hsl(var(--muted-foreground))]'>
-              Unable to load content for this topic.
-            </p>
-            <Button
-              onClick={() => navigate('/learning-path')}
-              variant='outline'
-            >
-              <ArrowLeft className='w-4 h-4 mr-2' />
-              Back to Learning Path
-            </Button>
-          </div>
+      <DashboardLayout>
+        <div className="grid h-[60vh] place-items-center">
+          <Card className="max-w-md text-center">
+            <CardContent className="flex flex-col items-center gap-3 p-8">
+              <div className="grid size-12 place-items-center rounded-2xl bg-destructive/10 text-destructive">
+                <AlertTriangle className="size-6" />
+              </div>
+              <h2 className="font-display text-xl font-bold">
+                Content not available
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Unable to load content for this topic.
+              </p>
+              <Button onClick={() => navigate('/learning-path')} variant="outline">
+                <ArrowLeft className="size-4" />
+                Back to Learning Path
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-      </LearningLayout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <LearningLayout>
-      <div className='grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6 p-6 lg:p-8 h-full'>
-        <div className='min-h-0 overflow-y-auto pr-1'>
-          <Button
+    <DashboardLayout>
+      {showConfetti && <ConfettiBurst />}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Main content */}
+        <div className="min-w-0 animate-fade-in space-y-6">
+          {/* Back link */}
+          <button
             onClick={() => navigate('/learning-path')}
-            variant='outline'
-            className='mb-4'
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className='w-4 h-4 mr-2' />
+            <ArrowLeft className="size-4" />
             Back to Learning Path
-          </Button>
+          </button>
 
-          {/* Breadcrumb */}
-          <div className='flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] mb-6'>
-            <button
-              onClick={() => navigate('/learning-path')}
-              className='hover:text-[hsl(var(--foreground))] transition-colors'
-            >
-              Learning Path
-            </button>
-            <ChevronRight className='w-4 h-4' />
-            <span>{content.module}</span>
-            <ChevronRight className='w-4 h-4' />
-            <span className='text-[hsl(var(--foreground))]'>
-              {content.topic}
-            </span>
-          </div>
-
-          {/* Header */}
-          <div className='mb-8 animate-fade-in'>
-            <div className='flex items-center gap-2 mb-2'>
-              <span className='ui-chip bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.3)]'>
-                {content.difficulty}
-              </span>
-              <span className='ui-chip'>{content.module}</span>
-            </div>
-            <h1 className='ui-page-title'>{content.topic}</h1>
-          </div>
-
-          {/* Main Content */}
-          <div className='space-y-6'>
-            {/* Explanation */}
-            <ContentSection title='Explanation' icon={Lightbulb}>
-              <div className='prose prose-invert max-w-none'>
-                <div className='text-[hsl(var(--foreground))]'>
-                  <RichTextContent content={content.explanation} />
-                </div>
+          {/* Lesson header */}
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-[oklch(0.5_0.12_205)] text-primary-foreground">
+            <CardContent className="p-6">
+              <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs text-primary-foreground/80">
+                <span>{content.module}</span>
+                <ChevronRight className="size-3.5" />
+                <span className="font-medium text-primary-foreground">
+                  {content.topic}
+                </span>
               </div>
-            </ContentSection>
+              <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+                {content.topic}
+              </h1>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge className="border-none bg-white/15 capitalize text-primary-foreground">
+                  {content.difficulty}
+                </Badge>
+                <Badge className="border-none bg-white/15 text-primary-foreground">
+                  {content.module}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Code Examples */}
-            {content.code_examples && content.code_examples.length > 0 && (
-              <ContentSection title='Code Examples' icon={Code}>
-                <div className='space-y-4'>
-                  {content.code_examples.map((example, index) => (
-                    <CodeBlock key={index} code={example} />
-                  ))}
-                </div>
+          {/* Body */}
+          <Card>
+            <CardContent className="space-y-8 p-6 sm:p-7">
+              <ContentSection title="Explanation" icon={Lightbulb} tone="primary">
+                <RichTextContent content={content.explanation} />
               </ContentSection>
-            )}
 
-            {/* Common Mistakes */}
-            {content.common_mistakes && content.common_mistakes.length > 0 && (
-              <ContentSection
-                title='Common Mistakes to Avoid'
-                icon={AlertTriangle}
-              >
-                <ul className='space-y-2'>
-                  {content.common_mistakes.map((mistake, index) => (
-                    <li
-                      key={index}
-                      className='flex items-start gap-3 text-[hsl(var(--foreground))]'
-                    >
-                      <span className='w-5 h-5 rounded-full bg-[hsl(var(--destructive)/0.2)] flex items-center justify-center shrink-0 mt-0.5'>
-                        <span className='text-xs text-[hsl(var(--destructive))]'>
+              {content.code_examples?.length > 0 && (
+                <ContentSection title="Code Examples" icon={Code} tone="info">
+                  <div className="space-y-4">
+                    {content.code_examples.map((example, index) => (
+                      <CodeBlock key={index} code={example} />
+                    ))}
+                  </div>
+                </ContentSection>
+              )}
+
+              {content.common_mistakes?.length > 0 && (
+                <ContentSection
+                  title="Common Mistakes to Avoid"
+                  icon={AlertTriangle}
+                  tone="destructive"
+                >
+                  <ul className="space-y-3">
+                    {content.common_mistakes.map((mistake, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-destructive/15 text-xs text-destructive">
                           ✗
                         </span>
-                      </span>
-                      <div>
                         <RichTextContent content={mistake} />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </ContentSection>
-            )}
+                      </li>
+                    ))}
+                  </ul>
+                </ContentSection>
+              )}
 
-            {/* Best Practices */}
-            {content.best_practices && content.best_practices.length > 0 && (
-              <ContentSection title='Best Practices' icon={CheckCircle2}>
-                <ul className='space-y-2'>
-                  {content.best_practices.map((practice, index) => (
-                    <li
-                      key={index}
-                      className='flex items-start gap-3 text-[hsl(var(--foreground))]'
-                    >
-                      <span className='w-5 h-5 rounded-full bg-[hsl(var(--success)/0.2)] flex items-center justify-center shrink-0 mt-0.5'>
-                        <span className='text-xs text-[hsl(var(--success))]'>
+              {content.best_practices?.length > 0 && (
+                <ContentSection
+                  title="Best Practices"
+                  icon={CheckCircle2}
+                  tone="success"
+                >
+                  <ul className="space-y-3">
+                    {content.best_practices.map((practice, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-success/15 text-xs text-success">
                           ✓
                         </span>
-                      </span>
-                      <div>
                         <RichTextContent content={practice} />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </ContentSection>
-            )}
-
-            {/* Practice Tasks */}
-            {content.practice_tasks && content.practice_tasks.length > 0 && (
-              <ContentSection title='Practice Tasks' icon={ListTodo}>
-                <ul className='space-y-3'>
-                  {content.practice_tasks.map((task, index) => (
-                    <li
-                      key={index}
-                      className='flex items-start gap-3 p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg'
-                    >
-                      <span className='w-6 h-6 rounded-full bg-[hsl(var(--primary)/0.2)] flex items-center justify-center shrink-0 text-xs font-medium text-[hsl(var(--primary))]'>
-                        {index + 1}
-                      </span>
-                      <div className='text-[hsl(var(--foreground))]'>
-                        <RichTextContent content={task} />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </ContentSection>
-            )}
-
-            {/* Mini Project */}
-            {content.mini_project && (
-              <ContentSection title='Mini Project' icon={Folder}>
-                <div className='p-4 bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)] rounded-lg space-y-4'>
-                  <div className='text-[hsl(var(--foreground))]'>
-                    <RichTextContent content={content.mini_project} />
-                  </div>
-
-                  <div className='rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.45)] p-4 space-y-3'>
-                    <p className='text-sm font-medium text-[hsl(var(--foreground))]'>
-                      Submit this project for Resume Builder
-                    </p>
-                    <Input
-                      value={projectTitle}
-                      onChange={(e) => setProjectTitle(e.target.value)}
-                      placeholder='Project title'
-                    />
-                    <textarea
-                      value={projectSummary}
-                      onChange={(e) => setProjectSummary(e.target.value)}
-                      rows={4}
-                      placeholder='What did you build and what impact did it have?'
-                      className='w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]'
-                    />
-                    <Input
-                      value={repositoryUrl}
-                      onChange={(e) => setRepositoryUrl(e.target.value)}
-                      placeholder='Repository URL (optional)'
-                    />
-                    <Input
-                      value={liveUrl}
-                      onChange={(e) => setLiveUrl(e.target.value)}
-                      placeholder='Live URL (optional)'
-                    />
-                    <Input
-                      value={techStack}
-                      onChange={(e) => setTechStack(e.target.value)}
-                      placeholder='Tech stack (comma separated)'
-                    />
-                    <Button
-                      onClick={handleSubmitProject}
-                      variant='outline'
-                      disabled={submittingProject}
-                    >
-                      {submittingProject ? (
-                        <>
-                          <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                          Submitting...
-                        </>
-                      ) : (
-                        'Submit Project'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </ContentSection>
-            )}
-
-            {/* Assignments */}
-            {content.assignments && content.assignments.length > 0 && (
-              <ContentSection title='Assignments' icon={ListTodo}>
-                <ul className='space-y-3'>
-                  {content.assignments.map((assignment, index) => (
-                    <li
-                      key={index}
-                      className='flex items-start gap-3 p-3 bg-[hsl(var(--secondary)/0.1)] border border-[hsl(var(--secondary)/0.2)] rounded-lg'
-                    >
-                      <span className='w-6 h-6 rounded-full bg-[hsl(var(--secondary)/0.2)] flex items-center justify-center shrink-0 text-xs font-medium text-[hsl(var(--secondary))]'>
-                        {index + 1}
-                      </span>
-                      <div className='text-[hsl(var(--foreground))]'>
-                        <RichTextContent content={assignment} />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </ContentSection>
-            )}
-          </div>
-
-          {/* Complete Button */}
-          <div className='ui-surface-card mt-8 flex items-center justify-between p-6'>
-            <div>
-              <h3 className='font-semibold text-[hsl(var(--foreground))]'>
-                Ready to continue?
-              </h3>
-              <p className='text-sm text-[hsl(var(--muted-foreground))]'>
-                Mark this topic as complete to earn XP and unlock the next
-                topic.
-              </p>
-            </div>
-            <Button
-              onClick={handleComplete}
-              disabled={completing}
-              variant='gradient'
-              size='lg'
-            >
-              {completing ? (
-                <>
-                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                  Completing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className='w-4 h-4 mr-2' />
-                  Mark as Complete
-                </>
+                      </li>
+                    ))}
+                  </ul>
+                </ContentSection>
               )}
-            </Button>
-          </div>
+
+              {content.practice_tasks?.length > 0 && (
+                <ContentSection title="Practice Tasks" icon={ListTodo} tone="primary">
+                  <ul className="space-y-3">
+                    {content.practice_tasks.map((task, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3 rounded-xl bg-muted/40 p-3"
+                      >
+                        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                          {index + 1}
+                        </span>
+                        <RichTextContent content={task} />
+                      </li>
+                    ))}
+                  </ul>
+                </ContentSection>
+              )}
+
+              {content.assignments?.length > 0 && (
+                <ContentSection title="Assignments" icon={ListTodo} tone="info">
+                  <ul className="space-y-3">
+                    {content.assignments.map((assignment, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3 rounded-xl bg-muted/40 p-3"
+                      >
+                        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-info/15 text-xs font-bold text-info">
+                          {index + 1}
+                        </span>
+                        <RichTextContent content={assignment} />
+                      </li>
+                    ))}
+                  </ul>
+                </ContentSection>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Complete */}
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="font-display text-lg font-bold">Ready to continue?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Mark this topic complete to earn XP and unlock the next one.
+                </p>
+              </div>
+              <Button
+                onClick={handleComplete}
+                disabled={completing}
+                size="lg"
+                className="w-full shrink-0 sm:w-auto"
+              >
+                {completing ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Completing…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-4" />
+                    Mark as Complete
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className='hidden lg:block h-full min-h-0'>
-          <div className='sticky top-4 h-[calc(100vh-2rem)] min-h-0 overflow-hidden rounded-xl border border-[hsl(var(--border))]'>
+        {/* AI tutor — desktop sticky */}
+        <div className="hidden lg:block">
+          <Card className="sticky top-8 flex h-[calc(100vh-7rem)] min-h-0 flex-col overflow-hidden">
             <AIAssistant
               lessonTitle={content.topic}
               moduleId={moduleId}
               topic={topic}
             />
-          </div>
+          </Card>
         </div>
       </div>
-    </LearningLayout>
+
+      {/* AI tutor — mobile floating button + drawer */}
+      <button
+        onClick={() => setMobileTutorOpen(true)}
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg lg:hidden"
+      >
+        <MessageSquare className="size-4" />
+        Ask Shagird
+      </button>
+
+      {mobileTutorOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-foreground/40"
+            onClick={() => setMobileTutorOpen(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 flex h-[85vh] flex-col overflow-hidden rounded-t-3xl border-t border-border bg-card">
+            <div className="flex items-center justify-between border-b border-border p-3">
+              <span className="font-display font-bold">Shagird</span>
+              <button
+                onClick={() => setMobileTutorOpen(false)}
+                className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <AIAssistant
+                lessonTitle={content.topic}
+                moduleId={moduleId}
+                topic={topic}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </DashboardLayout>
   );
 }

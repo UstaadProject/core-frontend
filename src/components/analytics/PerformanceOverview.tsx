@@ -1,4 +1,6 @@
-import { BarChart3, TrendingUp, Flame, BookOpen } from 'lucide-react';
+import { BarChart3, TrendingUp, Flame, BookOpen, type LucideIcon } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import type { UserAnalytics } from '@/services/api/analyticsApi';
 
 interface PerformanceOverviewProps {
@@ -6,72 +8,58 @@ interface PerformanceOverviewProps {
 }
 
 export function PerformanceOverview({ data }: PerformanceOverviewProps) {
-  const stats = [
+  const stats: {
+    icon: LucideIcon;
+    label: string;
+    value: React.ReactNode;
+    subtext: string;
+    tone: string;
+  }[] = [
     {
       icon: TrendingUp,
       label: 'Overall Progress',
       value: `${(data.learningProgress.overallProgress * 100).toFixed(0)}%`,
       subtext: 'of learning path',
-      color: 'from-primary to-accent',
-      bgColor: 'bg-primary/10',
-      iconColor: 'text-primary',
+      tone: 'bg-primary/10 text-primary',
     },
     {
       icon: Flame,
       label: 'Streak Days',
       value: data.overview.streakDays,
       subtext: 'current streak',
-      color: 'from-secondary to-primary',
-      bgColor: 'bg-secondary/10',
-      iconColor: 'text-secondary',
+      tone: 'bg-streak/12 text-streak',
     },
     {
       icon: BookOpen,
       label: 'Topics Mastered',
       value: data.overview.topicsCompleted,
       subtext: 'total completed',
-      color: 'from-accent to-primary',
-      bgColor: 'bg-accent/10',
-      iconColor: 'text-accent',
+      tone: 'bg-xp/12 text-xp',
     },
     {
       icon: BarChart3,
       label: 'Current Level',
       value: data.overview.currentLevel,
       subtext: `${(data.overview.averageProficiency * 100).toFixed(0)}% proficiency`,
-      color: 'from-accent to-secondary',
-      bgColor: 'bg-accent/10',
-      iconColor: 'text-accent',
+      tone: 'bg-info/12 text-info',
     },
   ];
 
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up'>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat, idx) => (
-        <div
-          key={idx}
-          className='ui-surface-card p-6 rounded-2xl hover:shadow-lg transition-all duration-300 group'
-          style={{ animationDelay: `${idx * 0.1}s` }}
-        >
-          <div className='flex items-start justify-between mb-4'>
-            <div
-              className={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform`}
-            >
-              <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
+        <Card key={idx} className="card-hover">
+          <CardContent className="p-5">
+            <div className={cn('mb-4 grid size-11 place-items-center rounded-xl', stat.tone)}>
+              <stat.icon className="size-5" />
             </div>
-          </div>
-          <p className='text-[hsl(var(--muted-foreground))] text-sm font-medium mb-1'>
-            {stat.label}
-          </p>
-          <div className='flex items-baseline gap-2'>
-            <h3 className='text-3xl font-bold text-[hsl(var(--foreground))]'>
+            <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+            <h3 className="mt-1 font-display text-3xl font-extrabold tabular-nums">
               {stat.value}
             </h3>
-          </div>
-          <p className='text-xs text-[hsl(var(--muted-foreground))] mt-2'>
-            {stat.subtext}
-          </p>
-        </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">{stat.subtext}</p>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
