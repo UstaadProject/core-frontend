@@ -23,7 +23,7 @@ export function PublicRoute({ children }: PublicRouteProps) {
   if (isChecking) {
     return (
       <div className='min-h-screen flex items-center justify-center bg-background'>
-        <div className='flex items-center gap-3 text-[hsl(var(--muted-foreground))]'>
+        <div className='flex items-center gap-3 text-muted-foreground'>
           <Loader2 className='w-5 h-5 animate-spin' />
           Checking session...
         </div>

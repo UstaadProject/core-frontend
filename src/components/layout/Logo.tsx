@@ -1,17 +1,30 @@
 import React from 'react';
-import { Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
-export const Logo: React.FC = () => {
+export const Logo: React.FC<{
+  to?: string;
+  className?: string;
+  showText?: boolean;
+  onDark?: boolean;
+}> = ({ to = '/', className, showText = true, onDark = false }) => {
   return (
-    <Link to='/' className='flex items-center gap-3 group'>
-      <div className='relative'>
-        <div className='w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow duration-300'>
-          <Sparkles className='w-5 h-5 text-primary-foreground' />
-        </div>
-        <div className='absolute inset-0 rounded-xl bg-gradient-hero opacity-50 blur-xl group-hover:opacity-75 transition-opacity duration-300' />
+    <Link to={to} className={cn('flex items-center gap-2.5 group', className)}>
+      <div
+        className={cn(
+          'grid size-9 place-items-center rounded-xl font-display text-lg font-extrabold shadow-sm transition-transform group-hover:scale-105',
+          onDark
+            ? 'bg-white text-primary'
+            : 'bg-primary text-primary-foreground'
+        )}
+      >
+        U
       </div>
-      <span className='text-4xl font-bold text-gradient-hero'>Ustaad</span>
+      {showText && (
+        <span className="font-display text-xl font-extrabold tracking-tight">
+          Ustaad
+        </span>
+      )}
     </Link>
   );
 };

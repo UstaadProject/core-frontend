@@ -4,12 +4,30 @@ import { useEffect, useRef, useState } from 'react';
 import {
   BookOpen,
   Clock,
-  Trophy,
+  Sparkles,
   Zap,
   CheckCircle2,
+  Lock,
   ArrowRight,
+  Play,
+  Trophy,
+  Award,
 } from 'lucide-react';
-import { WelcomeHero } from '@/components/dashboard/WelcomeHero';
+
+const humanize = (key: string) =>
+  key
+    .replace(/[_-]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  XpBar,
+  StatPill,
+  StreakFlame,
+  levelFromXp,
+} from '@/components/gamification';
 import { AIAssistant } from '@/components/learning/AIAssistant';
 import {
   getDashboardStats,
@@ -17,82 +35,42 @@ import {
   type DashboardStats,
 } from '@/services/api/learningApi';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-/* ---- Skeleton loading state ---- */
 function DashboardSkeleton() {
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-7xl mx-auto space-y-6'>
-        {/* Hero skeleton */}
-        <div className='skeleton skeleton-card h-48 w-full' />
-        {/* Stats row skeleton */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5'>
+      <div className="space-y-6">
+        <div className="h-36 w-full animate-pulse rounded-2xl bg-muted" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className='skeleton skeleton-card h-32' />
+            <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />
           ))}
         </div>
-        {/* Bottom grid */}
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-2 skeleton skeleton-card h-80' />
-          <div className='skeleton skeleton-card h-80' />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="h-80 animate-pulse rounded-2xl bg-muted lg:col-span-2" />
+          <div className="h-80 animate-pulse rounded-2xl bg-muted" />
         </div>
       </div>
     </DashboardLayout>
   );
 }
 
-const statConfigs = [
-  {
-    label: 'Modules Enrolled',
-    icon: BookOpen,
-    variant: 'primary' as const,
-    iconColor: 'text-[hsl(var(--primary))]',
-    iconBg: 'icon-bubble-primary',
-    cardVariant: 'stat-card-primary',
-  },
-  {
-    label: 'Hours Learned',
-    icon: Clock,
-    variant: 'secondary' as const,
-    iconColor: 'text-[hsl(var(--secondary))]',
-    iconBg: 'icon-bubble-secondary',
-    cardVariant: 'stat-card-secondary',
-  },
-  {
-    label: 'Skills Mastered',
-    icon: Zap,
-    variant: 'accent' as const,
-    iconColor: 'text-[hsl(var(--accent))]',
-    iconBg: 'icon-bubble-accent',
-    cardVariant: 'stat-card-accent',
-  },
-  {
-    label: 'XP Earned',
-    icon: Trophy,
-    variant: 'success' as const,
-    iconColor: 'text-[hsl(var(--success))]',
-    iconBg: 'icon-bubble-success',
-    cardVariant: 'stat-card-success',
-  },
-];
-
-export default function Index() {
+export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
-  const hasFetchedRef = useRef(false);
+  const [data, setData] = useState<DashboardStats | null>(null);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
-
-    const fetchDashboardData = async () => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    (async () => {
       try {
         setLoading(true);
         await updateStreak().catch(() => {});
-        const data = await getDashboardStats();
-        setDashboardData(data);
+        setData(await getDashboardStats());
       } catch (error) {
         toast({
           title: 'Failed to load dashboard',
@@ -103,236 +81,276 @@ export default function Index() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchDashboardData();
+    })();
   }, [toast]);
 
   if (loading) return <DashboardSkeleton />;
 
-  if (!dashboardData) {
+  if (!data) {
     return (
       <DashboardLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <div className='text-center space-y-2'>
-            <p className='text-[hsl(var(--muted-foreground))]'>
-              Unable to load dashboard. Please refresh the page.
-            </p>
-          </div>
+        <div className="grid h-[60vh] place-items-center text-center text-muted-foreground">
+          <p>Unable to load dashboard. Please refresh the page.</p>
         </div>
       </DashboardLayout>
     );
   }
 
-  const { user, gamification, stats, learningPath } = dashboardData;
+  const { user, gamification, stats, learningPath } = data;
+  const { level } = levelFromXp(gamification.xp);
+  const greeting =
+    new Date().getHours() < 12
+      ? 'Good morning'
+      : new Date().getHours() < 18
+        ? 'Good afternoon'
+        : 'Good evening';
 
-  const statsDisplay = [
-    {
-      ...statConfigs[0],
-      value: stats.coursesEnrolled.toString(),
-      sub: `${stats.inProgress} in progress`,
-    },
-    {
-      ...statConfigs[1],
-      value: Math.round(stats.hoursLearned).toString(),
-      sub: 'Total time spent',
-    },
-    {
-      ...statConfigs[2],
-      value: stats.skillsMastered.toString(),
-      sub: `${stats.coursesEnrolled - stats.skillsMastered} more to unlock`,
-    },
-    {
-      ...statConfigs[3],
-      value: gamification.xp.toLocaleString(),
-      sub: `${gamification.streakDays} day streak 🔥`,
-    },
-  ];
+  const moduleProgress = (m: (typeof learningPath.modules)[0]) =>
+    m.topicsCount === 0
+      ? 0
+      : Math.round((m.completedTopicsCount / m.topicsCount) * 100);
 
-  const getModuleStatus = (module: (typeof learningPath.modules)[0]) => {
-    if (module.status === 'completed') return 'completed';
-    if (module.status === 'in-progress') return 'in-progress';
-    return 'locked';
-  };
-
-  const getModuleProgress = (module: (typeof learningPath.modules)[0]) => {
-    if (module.topicsCount === 0) return 0;
-    return Math.round((module.completedTopicsCount / module.topicsCount) * 100);
-  };
+  const currentModule =
+    learningPath.modules.find((m) => m.status === 'in-progress') ??
+    learningPath.modules.find((m) => m.status !== 'completed');
 
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-7xl mx-auto'>
+      <div className="space-y-6 animate-fade-in">
         {/* Hero */}
-        <div className='mb-8 animate-fade-in'>
-          <WelcomeHero
-            userName={user.name}
-            streak={gamification.streakDays}
-            xp={gamification.xp}
+        <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-[oklch(0.5_0.12_205)] text-primary-foreground">
+          <CardContent className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-primary-foreground/80">
+                {greeting},
+              </p>
+              <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
+                {user.name?.split(' ')[0] || 'Learner'} 👋
+              </h1>
+              <p className="max-w-md text-sm text-primary-foreground/85">
+                {currentModule
+                  ? `You're on "${currentModule.title}". Keep the momentum going.`
+                  : 'Your learning journey is ready. Dive in!'}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <Badge className="border-none bg-white/15 text-primary-foreground">
+                  <Sparkles className="size-3.5" /> Level {level}
+                </Badge>
+                <StreakFlame
+                  days={gamification.streakDays}
+                  className="bg-white/15 text-primary-foreground"
+                />
+                <Badge className="border-none bg-white/15 text-primary-foreground">
+                  {learningPath.level} track
+                </Badge>
+              </div>
+            </div>
+            <div className="w-full max-w-xs rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
+              <XpBar totalXp={gamification.xp} />
+              <Button
+                variant="secondary"
+                className="mt-4 w-full bg-white text-primary hover:bg-white/90"
+                onClick={() => navigate('/learning-path')}
+              >
+                <Play className="size-4" /> Continue learning
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatPill
+            icon={BookOpen}
+            value={stats.coursesEnrolled}
+            label={`${stats.inProgress} in progress`}
+            tone="primary"
+          />
+          <StatPill
+            icon={Clock}
+            value={Math.round(stats.hoursLearned)}
+            label="Hours learned"
+            tone="info"
+          />
+          <StatPill
+            icon={Zap}
+            value={stats.skillsMastered}
+            label="Skills mastered"
+            tone="xp"
+          />
+          <StatPill
+            icon={Sparkles}
+            value={gamification.xp.toLocaleString()}
+            label="Total XP"
+            tone="badge"
           />
         </div>
 
-        {/* Stats Grid */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8'>
-          {statsDisplay.map((stat, i) => (
-            <div
-              key={stat.label}
-              className={`stat-card ${stat.cardVariant} p-6 animate-slide-up`}
-              style={{ animationDelay: `${i * 0.07}s` }}
-            >
-              {/* Icon + label row */}
-              <div className='flex items-start justify-between mb-4'>
-                <div className={`icon-bubble ${stat.iconBg}`}>
-                  <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
+        {/* Learning path + AI */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardContent className="p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h2 className="font-display text-xl font-bold">Learning Path</h2>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    Your personalized{' '}
+                    <span className="font-medium text-primary">
+                      {learningPath.level}
+                    </span>{' '}
+                    journey
+                  </p>
                 </div>
+                <Badge variant="secondary">
+                  {learningPath.completedModules}/{learningPath.totalModules}{' '}
+                  modules
+                </Badge>
               </div>
-              <p className='text-[11px] text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-widest mb-1'>
-                {stat.label}
-              </p>
-              <p className='text-3xl font-extrabold font-display text-[hsl(var(--foreground))] animate-number-pop'>
-                {stat.value}
-              </p>
-              <p className='text-[12px] text-[hsl(var(--muted-foreground))] mt-2'>
-                {stat.sub}
-              </p>
-            </div>
-          ))}
-        </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          {/* Learning Path Card */}
-          <div
-            className='lg:col-span-2 ui-surface-card p-6 rounded-2xl animate-slide-up'
-            style={{ animationDelay: '0.3s' }}
-          >
-            <div className='flex items-center justify-between mb-6'>
-              <div>
-                <h2 className='text-xl font-bold font-display text-[hsl(var(--foreground))]'>
-                  Learning Path
-                </h2>
-                <p className='text-sm text-[hsl(var(--muted-foreground))] mt-0.5'>
-                  Your personalized{' '}
-                  <span className='text-[hsl(var(--primary))] font-medium'>
-                    {learningPath.level}
-                  </span>{' '}
-                  journey
-                </p>
+              <div className="mb-5">
+                <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span>Overall progress</span>
+                  <span className="tabular-nums">
+                    {learningPath.totalModules === 0
+                      ? 0
+                      : Math.round(
+                          (learningPath.completedModules /
+                            learningPath.totalModules) *
+                            100
+                        )}
+                    %
+                  </span>
+                </div>
+                <Progress
+                  value={
+                    learningPath.totalModules === 0
+                      ? 0
+                      : (learningPath.completedModules /
+                          learningPath.totalModules) *
+                        100
+                  }
+                  tone="success"
+                />
               </div>
-              <span className='pill pill-primary text-[11px]'>
-                {learningPath.completedModules}/{learningPath.totalModules} modules
-              </span>
-            </div>
 
-            <div className='space-y-2'>
-              {learningPath.modules.map((module, i) => {
-                const status = getModuleStatus(module);
-                const progress = getModuleProgress(module);
-
-                return (
-                  <div
-                    key={module.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl transition-all border ${
-                      status === 'in-progress'
-                        ? 'bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:border-primary/50'
-                        : status === 'completed'
-                          ? 'bg-[hsl(var(--success)/0.07)] border-[hsl(var(--success)/0.25)]'
-                          : 'bg-[hsl(var(--muted)/0.15)] border-[hsl(var(--border)/0.4)] opacity-55'
-                    }`}
-                  >
-                    {/* Status icon + connector */}
-                    <div className='relative flex flex-col items-center'>
-                      {status === 'completed' ? (
-                        <CheckCircle2 className='w-6 h-6 text-[hsl(var(--success))]' />
-                      ) : status === 'in-progress' ? (
-                        <div
-                          className='w-6 h-6 rounded-full border-2 flex items-center justify-center'
-                          style={{
-                            borderColor: 'hsl(var(--primary))',
-                            boxShadow: '0 0 8px hsl(var(--primary) / 0.4)',
-                          }}
-                        >
-                          <div
-                            className='w-2.5 h-2.5 rounded-full'
-                            style={{ background: 'hsl(var(--primary))' }}
-                          />
-                        </div>
-                      ) : (
-                        <div className='w-6 h-6 rounded-full border-2 border-[hsl(var(--muted))] opacity-40' />
+              <div className="space-y-2.5">
+                {learningPath.modules.map((m) => {
+                  const status = m.status;
+                  const progress = moduleProgress(m);
+                  const locked = status !== 'completed' && status !== 'in-progress';
+                  return (
+                    <div
+                      key={m.id}
+                      className={cn(
+                        'flex items-center gap-4 rounded-xl border p-4 transition-colors',
+                        status === 'in-progress' &&
+                          'border-primary/30 bg-primary/5',
+                        status === 'completed' &&
+                          'border-success/25 bg-success/5',
+                        locked && 'border-border bg-muted/30 opacity-70'
                       )}
-                      {i < learningPath.modules.length - 1 && (
-                        <div
-                          className={`absolute left-1/2 top-full w-0.5 h-5 -translate-x-1/2 mt-0.5 ${
-                            status === 'completed'
-                              ? 'bg-[hsl(var(--success)/0.5)]'
-                              : 'bg-[hsl(var(--border))]'
-                          }`}
-                        />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className='flex-1 min-w-0'>
-                      <p
-                        className={`font-semibold text-sm truncate ${
-                          status === 'locked'
-                            ? 'text-[hsl(var(--muted-foreground))]'
-                            : 'text-[hsl(var(--foreground))]'
-                        }`}
-                      >
-                        {module.title}
-                      </p>
-                      {status === 'in-progress' && (
-                        <div className='flex items-center gap-2 mt-2'>
-                          <div className='flex-1 h-1.5 bg-[hsl(var(--muted)/0.4)] rounded-full overflow-hidden'>
-                            <div
-                              className='h-full rounded-full'
-                              style={{
-                                width: `${progress}%`,
-                                background:
-                                  'linear-gradient(90deg, hsl(var(--success)), hsl(var(--primary)))',
-                              }}
-                            />
+                    >
+                      <div className="shrink-0">
+                        {status === 'completed' ? (
+                          <CheckCircle2 className="size-6 text-success" />
+                        ) : status === 'in-progress' ? (
+                          <div className="grid size-6 place-items-center rounded-full border-2 border-primary">
+                            <div className="size-2.5 rounded-full bg-primary" />
                           </div>
-                          <span className='text-[11px] font-semibold text-[hsl(var(--foreground))] w-8 text-right'>
-                            {progress}%
-                          </span>
-                        </div>
+                        ) : (
+                          <Lock className="size-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={cn(
+                            'truncate text-sm font-semibold',
+                            locked && 'text-muted-foreground'
+                          )}
+                        >
+                          {m.title}
+                        </p>
+                        {status === 'in-progress' && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <Progress value={progress} tone="primary" size="sm" />
+                            <span className="w-9 text-right text-xs font-semibold tabular-nums">
+                              {progress}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {status === 'in-progress' && (
+                        <Button
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => navigate('/learning-path')}
+                        >
+                          Continue
+                        </Button>
                       )}
                     </div>
+                  );
+                })}
+              </div>
 
-                    {/* Action */}
-                    {status === 'in-progress' && (
-                      <button
-                        onClick={() => navigate('/learning-path')}
-                        className='px-4 py-1.5 rounded-lg text-sm font-semibold shrink-0 transition-all hover:opacity-90 hover:scale-[1.02]'
-                        style={{
-                          background:
-                            'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-                          color: 'hsl(var(--primary-foreground))',
-                          boxShadow: '0 0 12px hsl(var(--primary) / 0.3)',
-                        }}
-                      >
-                        Continue
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+              <Button
+                variant="ghost"
+                className="group mt-5 px-0 text-primary hover:bg-transparent"
+                onClick={() => navigate('/learning-path')}
+              >
+                View full learning path
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </CardContent>
+          </Card>
 
-            <button
-              onClick={() => navigate('/learning-path')}
-              className='flex items-center gap-2 mt-6 text-[hsl(var(--primary))] hover:gap-3 transition-all text-sm font-semibold group'
-            >
-              View full learning path
-              <ArrowRight className='w-4 h-4 group-hover:translate-x-1 transition-transform' />
-            </button>
+          {/* Achievements strip */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Trophy className="size-5 text-badge" />
+                  <h2 className="font-display text-xl font-bold">Achievements</h2>
+                  {gamification.achievements.length > 0 && (
+                    <Badge variant="badge">{gamification.achievements.length}</Badge>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-primary hover:bg-transparent"
+                  onClick={() => navigate('/achievements')}
+                >
+                  View all
+                  <ArrowRight className="size-4" />
+                </Button>
+              </div>
+              {gamification.achievements.length === 0 ? (
+                <div className="flex items-center gap-3 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  <Award className="size-5 shrink-0 text-muted-foreground" />
+                  Complete your first topic to earn a badge.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {gamification.achievements.slice(0, 8).map((a) => (
+                    <span
+                      key={a}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-badge/12 px-3 py-1.5 text-xs font-semibold text-badge"
+                    >
+                      <Award className="size-3.5" />
+                      {humanize(a)}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
           </div>
 
-          {/* AI Assistant */}
-          <div className='h-[560px] min-h-0 overflow-hidden rounded-2xl border border-[hsl(var(--border))]'>
+          <Card className="flex h-[560px] min-h-0 flex-col overflow-hidden">
             <AIAssistant />
-          </div>
+          </Card>
         </div>
       </div>
     </DashboardLayout>

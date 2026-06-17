@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import {
   getUserAnalytics,
@@ -22,45 +24,43 @@ import { InsightsSection } from '@/components/analytics/InsightsSection';
 function AnalyticsSkeleton() {
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-7xl mx-auto space-y-6'>
-        <div className='skeleton skeleton-card h-20 w-2/5' />
-        <div className='grid grid-cols-3 gap-5'>
-          {[...Array(3)].map((_, i) => <div key={i} className='skeleton skeleton-card h-32' />)}
+      <div className="space-y-6">
+        <div className="h-20 w-2/5 animate-pulse rounded-2xl bg-muted" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-32 animate-pulse rounded-2xl bg-muted" />
+          ))}
         </div>
-        <div className='grid grid-cols-3 gap-5'>
-          <div className='col-span-2 skeleton skeleton-card h-64' />
-          <div className='skeleton skeleton-card h-64' />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="h-64 animate-pulse rounded-2xl bg-muted lg:col-span-2" />
+          <div className="h-64 animate-pulse rounded-2xl bg-muted" />
         </div>
       </div>
     </DashboardLayout>
   );
 }
 
-interface PerformanceBarProps {
+function PerformanceBar({
+  label,
+  value,
+  tone,
+  icon,
+}: {
   label: string;
   value: number;
-  color: string;
+  tone: 'primary' | 'info' | 'xp';
   icon: React.ReactNode;
-}
-
-function PerformanceBar({ label, value, color, icon }: PerformanceBarProps) {
+}) {
   return (
-    <div className='space-y-1.5'>
-      <div className='flex items-center justify-between text-sm'>
-        <div className='flex items-center gap-2 text-[hsl(var(--muted-foreground))]'>
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <span className="flex items-center gap-2 text-muted-foreground">
           {icon}
-          <span>{label}</span>
-        </div>
-        <span className='font-bold' style={{ color }}>
-          {value.toFixed(1)}%
+          {label}
         </span>
+        <span className="font-bold tabular-nums">{value.toFixed(1)}%</span>
       </div>
-      <div className='w-full h-2 rounded-full bg-[hsl(var(--muted)/0.4)] overflow-hidden'>
-        <div
-          className='h-full rounded-full transition-all duration-1000'
-          style={{ width: `${value}%`, background: color }}
-        />
-      </div>
+      <Progress value={value} tone={tone} size="sm" />
     </div>
   );
 }
@@ -75,33 +75,28 @@ export default function Analytics() {
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-
-    const fetchAnalytics = async () => {
+    (async () => {
       try {
         setLoading(true);
         setError(null);
         const data = await getUserAnalytics();
-
         if (!data || typeof data !== 'object') {
           throw new Error('Invalid analytics data received');
         }
-
         setAnalyticsData(data);
       } catch (error) {
-        const errorMessage =
+        const msg =
           error instanceof Error ? error.message : 'An unexpected error occurred';
-        setError(errorMessage);
+        setError(msg);
         toast({
           title: 'Failed to load analytics',
-          description: errorMessage,
+          description: msg,
           variant: 'destructive',
         });
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchAnalytics();
+    })();
   }, [toast]);
 
   if (loading) return <AnalyticsSkeleton />;
@@ -109,18 +104,17 @@ export default function Analytics() {
   if (!analyticsData || error) {
     return (
       <DashboardLayout>
-        <div className='flex items-center justify-center h-screen'>
-          <div className='flex flex-col items-center gap-4 text-center'>
-            <div
-              className='p-4 rounded-2xl'
-              style={{ background: 'hsl(var(--destructive)/0.1)' }}
-            >
-              <AlertCircle className='w-8 h-8 text-[hsl(var(--destructive))]' />
-            </div>
-            <p className='text-[hsl(var(--muted-foreground))]'>
-              {error ?? 'Unable to load analytics. Please refresh the page.'}
-            </p>
-          </div>
+        <div className="grid h-[60vh] place-items-center">
+          <Card className="max-w-md text-center">
+            <CardContent className="flex flex-col items-center gap-3 p-8">
+              <div className="grid size-12 place-items-center rounded-2xl bg-destructive/10 text-destructive">
+                <AlertCircle className="size-6" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {error ?? 'Unable to load analytics. Please refresh the page.'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </DashboardLayout>
     );
@@ -128,122 +122,105 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className='max-w-7xl mx-auto animate-fade-in'>
-        {/* Page banner */}
-        <div className='page-banner'>
-          <div className='flex items-center gap-4 mb-2'>
-            <div
-              className='p-3 rounded-xl'
-              style={{ background: 'linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--accent)/0.15))' }}
-            >
-              <TrendingUp className='w-6 h-6 text-[hsl(var(--primary))]' />
-            </div>
-            <div>
-              <h1 className='text-3xl font-extrabold font-display text-[hsl(var(--foreground))]'>
-                Learning Analytics
-              </h1>
-              <p className='text-[hsl(var(--muted-foreground))] text-sm mt-0.5'>
-                Deep insights into your progress and personalized recommendations
-              </p>
-            </div>
+      <div className="animate-fade-in space-y-8">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <TrendingUp className="size-6" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+              Learning Analytics
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Deep insights into your progress and personalized recommendations.
+            </p>
           </div>
         </div>
 
-        <div className='p-8 space-y-8'>
-          {/* Performance Overview */}
-          {analyticsData.performanceMetrics && analyticsData.overview && (
-            <PerformanceOverview data={analyticsData} />
-          )}
+        {analyticsData.performanceMetrics && analyticsData.overview && (
+          <PerformanceOverview data={analyticsData} />
+        )}
 
-          {/* Main Grid */}
-          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-            <div className='lg:col-span-2 space-y-6'>
-              {/* Weak Areas */}
-              {(analyticsData.weakAreas?.length ?? 0) > 0 && (
-                <WeakAreasSection weakAreas={analyticsData.weakAreas || []} />
-              )}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {(analyticsData.weakAreas?.length ?? 0) > 0 && (
+              <WeakAreasSection weakAreas={analyticsData.weakAreas || []} />
+            )}
+            {(analyticsData.recommendedTopics?.length ?? 0) > 0 && (
+              <RecommendedTopicsSection
+                topics={analyticsData.recommendedTopics || []}
+              />
+            )}
+          </div>
 
-              {/* Recommended Topics */}
-              {(analyticsData.recommendedTopics?.length ?? 0) > 0 && (
-                <RecommendedTopicsSection topics={analyticsData.recommendedTopics || []} />
-              )}
-            </div>
-
-            <div className='space-y-6'>
-              {/* Your Strengths */}
-              {(analyticsData.strengths?.length ?? 0) > 0 && (
-                <div className='ui-surface-card p-6 rounded-2xl'>
-                  <div className='section-header'>
-                    <div className='section-header-icon icon-bubble icon-bubble-success'>
-                      <Zap className='w-4 h-4 text-[hsl(var(--success))]' />
+          <div className="space-y-6">
+            {(analyticsData.strengths?.length ?? 0) > 0 && (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="grid size-9 place-items-center rounded-lg bg-success/12 text-success">
+                      <Zap className="size-5" />
                     </div>
-                    <h3 className='font-bold font-display text-[hsl(var(--foreground))]'>
-                      Your Strengths
-                    </h3>
+                    <h3 className="font-display font-bold">Your Strengths</h3>
                   </div>
-                  <div className='space-y-2'>
+                  <div className="space-y-2">
                     {(analyticsData.strengths || []).map((strength, idx) => (
                       <div
                         key={idx}
-                        className='flex items-start gap-2.5 p-2.5 rounded-lg animate-slide-up'
-                        style={{
-                          animationDelay: `${idx * 0.06}s`,
-                          background: 'hsl(var(--success)/0.07)',
-                          border: '1px solid hsl(var(--success)/0.2)',
-                        }}
+                        className="flex items-start gap-2.5 rounded-lg border border-success/20 bg-success/[0.06] p-2.5"
                       >
-                        <div className='w-1.5 h-1.5 rounded-full bg-[hsl(var(--success))] flex-shrink-0 mt-1.5' />
-                        <p className='text-sm text-[hsl(var(--foreground))]'>{strength}</p>
+                        <div className="mt-1.5 size-1.5 shrink-0 rounded-full bg-success" />
+                        <p className="text-sm">{strength}</p>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                </CardContent>
+              </Card>
+            )}
 
-              {/* Performance metrics */}
-              <div className='ui-surface-card p-6 rounded-2xl'>
-                <div className='section-header'>
-                  <div className='section-header-icon icon-bubble icon-bubble-accent'>
-                    <Brain className='w-4 h-4 text-[hsl(var(--accent))]' />
+            <Card>
+              <CardContent className="p-6">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="grid size-9 place-items-center rounded-lg bg-info/12 text-info">
+                    <Brain className="size-5" />
                   </div>
-                  <h3 className='font-bold font-display text-[hsl(var(--foreground))]'>
-                    Performance
-                  </h3>
+                  <h3 className="font-display font-bold">Performance</h3>
                 </div>
-                <div className='space-y-4'>
+                <div className="space-y-4">
                   <PerformanceBar
-                    label='Quiz Score'
+                    label="Quiz Score"
                     value={analyticsData.performanceMetrics.averageQuizScore}
-                    color='hsl(var(--primary))'
-                    icon={<Target className='w-3.5 h-3.5' />}
+                    tone="primary"
+                    icon={<Target className="size-3.5" />}
                   />
                   <PerformanceBar
-                    label='Completion Rate'
+                    label="Completion Rate"
                     value={analyticsData.performanceMetrics.completionRate * 100}
-                    color='hsl(var(--secondary))'
-                    icon={<BookOpen className='w-3.5 h-3.5' />}
+                    tone="xp"
+                    icon={<BookOpen className="size-3.5" />}
                   />
                   <PerformanceBar
-                    label='Engagement'
+                    label="Engagement"
                     value={analyticsData.performanceMetrics.engagementScore * 100}
-                    color='hsl(var(--accent))'
-                    icon={<Zap className='w-3.5 h-3.5' />}
+                    tone="info"
+                    icon={<Zap className="size-3.5" />}
                   />
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
-
-          {/* Recommended Projects */}
-          {(analyticsData.recommendedProjects?.length ?? 0) > 0 && (
-            <RecommendedProjectsSection projects={analyticsData.recommendedProjects || []} />
-          )}
-
-          {/* Insights */}
-          {(analyticsData.insights?.length ?? 0) > 0 && (
-            <InsightsSection insights={analyticsData.insights || []} />
-          )}
         </div>
+
+        {(analyticsData.recommendedProjects?.length ?? 0) > 0 && (
+          <RecommendedProjectsSection
+            projects={analyticsData.recommendedProjects || []}
+          />
+        )}
+
+        {(analyticsData.insights?.length ?? 0) > 0 && (
+          <InsightsSection insights={analyticsData.insights || []} />
+        )}
       </div>
     </DashboardLayout>
   );

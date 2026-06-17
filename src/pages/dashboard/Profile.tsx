@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   Loader2,
   MailCheck,
@@ -30,12 +33,50 @@ import { useToast } from '@/hooks/use-toast';
 function ProfileSkeleton() {
   return (
     <DashboardLayout>
-      <div className='p-8 max-w-4xl mx-auto space-y-6'>
-        <div className='skeleton skeleton-card h-48' />
-        <div className='skeleton skeleton-card h-72' />
-        <div className='skeleton skeleton-card h-64' />
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="h-32 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-72 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted" />
       </div>
     </DashboardLayout>
+  );
+}
+
+function Section({
+  icon: Icon,
+  title,
+  subtitle,
+  tone = 'primary',
+  children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle?: string;
+  tone?: 'primary' | 'info' | 'success';
+  children: React.ReactNode;
+}) {
+  const toneMap = {
+    primary: 'bg-primary/10 text-primary',
+    info: 'bg-info/12 text-info',
+    success: 'bg-success/12 text-success',
+  } as const;
+  return (
+    <Card>
+      <CardContent className="space-y-5 p-6">
+        <div className="flex items-center gap-3">
+          <div className={cn('grid size-9 place-items-center rounded-xl', toneMap[tone])}>
+            <Icon className="size-4" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold">{title}</h2>
+            {subtitle && (
+              <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
+        </div>
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -60,8 +101,7 @@ export default function Profile() {
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-
-    const fetchUser = async () => {
+    (async () => {
       try {
         setLoading(true);
         const data = await getCurrentUser();
@@ -85,9 +125,7 @@ export default function Profile() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchUser();
+    })();
   }, [toast]);
 
   const handleSaveProfile = async () => {
@@ -108,8 +146,7 @@ export default function Profile() {
     } catch (error) {
       toast({
         title: 'Failed to update profile',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
     } finally {
@@ -120,15 +157,11 @@ export default function Profile() {
   const handleVerifyEmail = async () => {
     try {
       await sendCurrentUserVerificationEmail();
-      toast({
-        title: 'Verification email sent',
-        description: 'Check your inbox.',
-      });
+      toast({ title: 'Verification email sent', description: 'Check your inbox.' });
     } catch (error) {
       toast({
         title: 'Unable to send verification email',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
     }
@@ -139,7 +172,6 @@ export default function Profile() {
       toast({ title: 'Current password is required', variant: 'destructive' });
       return;
     }
-
     try {
       setEmailChanging(true);
       await changeCurrentUserEmail(currentPassword, newEmail.trim());
@@ -151,8 +183,7 @@ export default function Profile() {
     } catch (error) {
       toast({
         title: 'Failed to update email',
-        description:
-          error instanceof Error ? error.message : 'Please try again',
+        description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
     } finally {
@@ -166,187 +197,130 @@ export default function Profile() {
   const isVerified = auth.currentUser?.emailVerified;
 
   const formFields = [
-    { key: 'name', label: 'Full Name', icon: User, placeholder: 'Your full name', colSpan: false },
-    { key: 'location', label: 'Location', icon: MapPin, placeholder: 'City, Country', colSpan: false },
-    { key: 'bio', label: 'Bio', icon: FileText, placeholder: 'A short bio about yourself', colSpan: true },
-    { key: 'website', label: 'Website', icon: Globe, placeholder: 'https://your-site.com', colSpan: false },
-    { key: 'github', label: 'GitHub', icon: Github, placeholder: 'github.com/username', colSpan: false },
-    { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'linkedin.com/in/username', colSpan: true },
+    { key: 'name', label: 'Full Name', icon: User, placeholder: 'Your full name', wide: false },
+    { key: 'location', label: 'Location', icon: MapPin, placeholder: 'City, Country', wide: false },
+    { key: 'bio', label: 'Bio', icon: FileText, placeholder: 'A short bio about yourself', wide: true },
+    { key: 'website', label: 'Website', icon: Globe, placeholder: 'https://your-site.com', wide: false },
+    { key: 'github', label: 'GitHub', icon: Github, placeholder: 'github.com/username', wide: false },
+    { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, placeholder: 'linkedin.com/in/username', wide: true },
   ] as const;
 
   return (
     <DashboardLayout>
-      <div className='max-w-4xl mx-auto'>
-        {/* Page Banner with avatar */}
-        <div className='page-banner mb-0'>
-          <div className='flex items-center gap-6'>
-            {/* Avatar */}
-            <div className='avatar-ring shrink-0'>
-              <div
-                className='w-20 h-20 rounded-full flex items-center justify-center text-3xl font-extrabold text-white'
-                style={{
-                  background:
-                    'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-                }}
-              >
-                {initials}
-              </div>
+      <div className="mx-auto max-w-4xl animate-fade-in space-y-6">
+        {/* Header card */}
+        <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-[oklch(0.5_0.12_205)] text-primary-foreground">
+          <CardContent className="flex items-center gap-5 p-6">
+            <div className="grid size-20 shrink-0 place-items-center rounded-full bg-white/20 font-display text-3xl font-extrabold ring-4 ring-white/15">
+              {initials}
             </div>
-
-            {/* Name + verification */}
-            <div className='flex-1'>
-              <h1 className='text-2xl font-extrabold font-display text-[hsl(var(--foreground))]'>
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-2xl font-extrabold">
                 {form.name || 'Your Profile'}
               </h1>
-              <p className='text-[hsl(var(--muted-foreground))] text-sm mt-0.5'>
+              <p className="mt-0.5 truncate text-sm text-primary-foreground/80">
                 {user?.email}
               </p>
-              <div className='mt-2'>
+              <div className="mt-2">
                 {isVerified ? (
-                  <span className='pill pill-success text-[11px] flex items-center gap-1 w-fit'>
-                    <CheckCircle2 className='w-3 h-3' /> Email verified
-                  </span>
+                  <Badge className="border-none bg-white/20 text-primary-foreground">
+                    <CheckCircle2 className="size-3.5" /> Email verified
+                  </Badge>
                 ) : (
-                  <span className='pill pill-warning text-[11px] flex items-center gap-1 w-fit'>
-                    <AlertCircle className='w-3 h-3' /> Email not verified
-                  </span>
+                  <Badge className="border-none bg-white/20 text-primary-foreground">
+                    <AlertCircle className="size-3.5" /> Not verified
+                  </Badge>
                 )}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Personal info */}
+        <Section
+          icon={User}
+          title="Personal Information"
+          subtitle="Manage your personal details"
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {formFields.map(({ key, label, icon: Icon, placeholder, wide }) => (
+              <label key={key} className={wide ? 'md:col-span-2' : ''}>
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <Icon className="size-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {label}
+                  </span>
+                </div>
+                <Input
+                  value={form[key]}
+                  onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
+                  placeholder={placeholder}
+                />
+              </label>
+            ))}
           </div>
-        </div>
-
-        <div className='p-8 space-y-6'>
-          {/* Personal Information */}
-          <div className='ui-surface-card p-6 space-y-5 rounded-2xl'>
-            <div className='section-header'>
-              <div className='section-header-icon icon-bubble icon-bubble-primary'>
-                <User className='w-4 h-4 text-[hsl(var(--primary))]' />
-              </div>
-              <div>
-                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Personal Information</h2>
-                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>Manage your personal details</p>
-              </div>
-            </div>
-
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              {formFields.map(({ key, label, icon: Icon, placeholder, colSpan }) => (
-                <label key={key} className={colSpan ? 'md:col-span-2' : ''}>
-                  <div className='flex items-center gap-1.5 mb-1.5'>
-                    <Icon className='w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]' />
-                    <span className='ui-field-label'>{label}</span>
-                  </div>
-                  <Input
-                    value={form[key]}
-                    onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
-                    placeholder={placeholder}
-                  />
-                </label>
-              ))}
-            </div>
-
-            <div className='pt-2'>
-              <Button
-                onClick={handleSaveProfile}
-                disabled={saving}
-                style={{
-                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
-                  boxShadow: '0 0 16px hsl(var(--primary) / 0.3)',
-                  color: 'white',
-                }}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Profile'
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Email & Verification */}
-          <div className='ui-surface-card p-6 space-y-4 rounded-2xl'>
-            <div className='section-header'>
-              <div className='section-header-icon icon-bubble icon-bubble-accent'>
-                <MailCheck className='w-4 h-4 text-[hsl(var(--accent))]' />
-              </div>
-              <div>
-                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Email & Verification</h2>
-                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>
-                  Current: <span className='text-[hsl(var(--foreground))]'>{user?.email}</span>
-                </p>
-              </div>
-            </div>
-
-            {!isVerified && (
-              <div
-                className='rounded-xl px-4 py-3 border text-sm'
-                style={{
-                  background: 'hsl(var(--warning)/0.08)',
-                  borderColor: 'hsl(var(--warning)/0.4)',
-                  color: 'hsl(var(--warning))',
-                }}
-              >
-                Your email is not verified. Please verify it to access all features.
-              </div>
+          <Button onClick={handleSaveProfile} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Saving…
+              </>
+            ) : (
+              'Save Profile'
             )}
+          </Button>
+        </Section>
 
-            <Button variant='outline' onClick={handleVerifyEmail} className='flex items-center gap-2'>
-              <MailCheck className='w-4 h-4' />
-              Send verification email
+        {/* Email */}
+        <Section
+          icon={MailCheck}
+          title="Email & Verification"
+          subtitle={`Current: ${user?.email}`}
+          tone="info"
+        >
+          {!isVerified && (
+            <div className="rounded-xl border border-streak/40 bg-streak/10 px-4 py-3 text-sm text-streak">
+              Your email is not verified. Please verify it to access all features.
+            </div>
+          )}
+          <Button variant="outline" onClick={handleVerifyEmail}>
+            <MailCheck className="size-4" />
+            Send verification email
+          </Button>
+
+          <div className="space-y-3 border-t border-border pt-4">
+            <p className="text-sm font-semibold">Change Email</p>
+            <Input
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="New email address"
+            />
+            <Input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password (required)"
+            />
+            <Button onClick={handleChangeEmail} disabled={emailChanging} variant="outline">
+              {emailChanging ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Updating…
+                </>
+              ) : (
+                'Change Email'
+              )}
             </Button>
-
-            <div className='border-t border-[hsl(var(--border))] pt-4 space-y-3'>
-              <p className='text-sm font-semibold text-[hsl(var(--foreground))]'>Change Email</p>
-              <Input
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder='New email address'
-              />
-              <Input
-                type='password'
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder='Current password (required)'
-              />
-              <Button
-                onClick={handleChangeEmail}
-                disabled={emailChanging}
-                variant='outline'
-              >
-                {emailChanging ? (
-                  <>
-                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                    Updating...
-                  </>
-                ) : (
-                  'Change Email'
-                )}
-              </Button>
-            </div>
           </div>
+        </Section>
 
-          {/* Security placeholder */}
-          <div className='ui-surface-card p-6 rounded-2xl'>
-            <div className='section-header'>
-              <div className='section-header-icon icon-bubble' style={{ background: 'hsl(var(--success)/0.15)' }}>
-                <Shield className='w-4 h-4 text-[hsl(var(--success))]' />
-              </div>
-              <div>
-                <h2 className='font-bold text-[hsl(var(--foreground))] font-display'>Account Security</h2>
-                <p className='text-xs text-[hsl(var(--muted-foreground))] mt-0.5'>
-                  Change password and manage access
-                </p>
-              </div>
-            </div>
-            <p className='text-sm text-[hsl(var(--muted-foreground))]'>
-              Visit <span className='text-[hsl(var(--primary))]'>Settings → Security</span> to update your password.
-            </p>
-          </div>
-        </div>
+        {/* Security pointer */}
+        <Section icon={Shield} title="Account Security" tone="success">
+          <p className="text-sm text-muted-foreground">
+            Visit <span className="font-medium text-primary">Settings → Security</span>{' '}
+            to update your password.
+          </p>
+        </Section>
       </div>
     </DashboardLayout>
   );

@@ -226,7 +226,7 @@ export function MockClientInteraction() {
 
   if (!catalogue) {
     return (
-      <div className="ui-surface-card rounded-3xl p-8 flex items-center justify-center min-h-96">
+      <div className="rounded-2xl border border-border bg-card shadow-sm p-8 flex items-center justify-center min-h-96">
         <div className="text-center space-y-4">
           <Loader className="w-8 h-8 animate-spin text-primary mx-auto" />
           <p className="text-muted-foreground">Loading scenarios...</p>
@@ -241,7 +241,7 @@ export function MockClientInteraction() {
     return (
       <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
         {/* Left: Scenario selector */}
-        <div className="ui-surface-card rounded-3xl p-6 space-y-6 max-h-screen overflow-y-auto">
+        <div className="rounded-2xl border border-border bg-card shadow-sm p-6 space-y-6 max-h-screen overflow-y-auto">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="w-5 h-5 text-primary" />
@@ -354,7 +354,7 @@ export function MockClientInteraction() {
         </div>
 
         {/* Right: Info panel */}
-        <div className="ui-surface-card rounded-3xl p-6 space-y-6">
+        <div className="rounded-2xl border border-border bg-card shadow-sm p-6 space-y-6">
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Target className="w-5 h-5 text-primary" />
@@ -405,7 +405,7 @@ export function MockClientInteraction() {
 
   if (viewState === "chat") {
     return (
-      <div className="ui-surface-card rounded-3xl p-6 space-y-6">
+      <div className="rounded-2xl border border-border bg-card shadow-sm p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-4">
           <div>
@@ -523,7 +523,7 @@ export function MockClientInteraction() {
     return (
       <div className="space-y-6">
         {/* Overall feedback */}
-        <div className="ui-surface-card rounded-3xl p-8 space-y-6">
+        <div className="rounded-2xl border border-border bg-card shadow-sm p-8 space-y-6">
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-primary/10 p-4">
               <CheckCircle2 className="w-8 h-8 text-primary" />
@@ -576,7 +576,7 @@ export function MockClientInteraction() {
 
         {/* Turn-by-turn analysis */}
         {feedback.turn_analysis.length > 0 && (
-          <div className="ui-surface-card rounded-3xl p-8 space-y-4">
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-8 space-y-4">
             <h3 className="text-lg font-bold">Turn Analysis</h3>
             <div className="space-y-3">
               {feedback.turn_analysis.map((analysis) => (
@@ -590,7 +590,7 @@ export function MockClientInteraction() {
                       className={`text-xs font-semibold px-2 py-1 rounded ${
                         analysis.rating === "poor"
                           ? "bg-destructive/20 text-destructive"
-                          : "bg-warning/20 text-warning"
+                          : "bg-streak/15 text-streak"
                       }`}
                     >
                       {analysis.rating.toUpperCase()}
@@ -621,7 +621,7 @@ export function MockClientInteraction() {
 
   if (viewState === "error") {
     return (
-      <div className="ui-surface-card rounded-3xl p-8 flex flex-col items-center justify-center min-h-96 gap-4 text-center">
+      <div className="rounded-2xl border border-border bg-card shadow-sm p-8 flex flex-col items-center justify-center min-h-96 gap-4 text-center">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <h2 className="text-xl font-bold">Something went wrong</h2>
         <p className="text-sm text-muted-foreground max-w-sm">{error}</p>
